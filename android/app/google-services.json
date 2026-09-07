@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "873420975277",
+    "project_id": "flutterinventory-app-38729",
+    "storage_bucket": "flutterinventory-app-38729.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:873420975277:android:33fa0dd52e00fc4ec5aa24",
+        "android_client_info": {
+          "package_name": "com.example.flutter_inventory"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB5tTkWOzBFDkQ_r_D7LWBVwx0_a5WR-m8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
