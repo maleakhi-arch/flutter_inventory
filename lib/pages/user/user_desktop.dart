@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_inventory/core/ui/app_state_view.dart';
+import 'package:flutter_inventory/core/ui/app_feedback.dart';
 import 'package:flutter_inventory/core/services/user_service.dart';
 import 'package:flutter_inventory/models/user_model.dart';
 
@@ -44,7 +46,7 @@ class _UserDesktopState extends State<UserDesktop> {
         isLoading = false;
       });
 
-      _showMessage('Gagal mengambil data user');
+      _showError('Gagal mengambil data user');
     }
   }
 
@@ -62,50 +64,36 @@ class _UserDesktopState extends State<UserDesktop> {
     }).toList();
   }
 
-  void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+  void _showSuccess(String message) {
+    AppFeedback.success(context, message);
+  }
+
+  void _showError(String message) {
+    AppFeedback.error(context, message);
   }
 
   Future<void> _deleteUser(UserModel user) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Hapus User'),
-          content: Text(
-            'Apakah kamu yakin ingin menghapus akun ${user.name}?',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Batal'),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context, true),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('Hapus'),
-            ),
-          ],
-        );
-      },
+    final confirm = await AppFeedback.confirmDelete(
+      context,
+      title: 'Hapus User',
+      message:
+          'Akun "${user.name}" (${user.email}) akan dihapus dan tidak dapat digunakan lagi.',
     );
 
-    if (confirm != true) return;
+    if (!confirm) return;
 
-    final success = await userService.deleteUser(user.id);
-
-    if (!mounted) return;
-
-    if (success) {
-      _showMessage('User berhasil dihapus');
-      _loadUsers();
-    } else {
-      _showMessage('Gagal menghapus user');
+    try {
+      final success = await userService.deleteUser(user.id);
+      if (!mounted) return;
+      if (success) {
+        _showSuccess('User berhasil dihapus');
+        await _loadUsers();
+      } else {
+        _showError('Gagal menghapus user');
+      }
+    } catch (_) {
+      if (!mounted) return;
+      _showError('Terjadi kesalahan saat menghapus user');
     }
   }
 
@@ -113,10 +101,7 @@ class _UserDesktopState extends State<UserDesktop> {
     final result = await showDialog<bool>(
       context: context,
       builder: (context) {
-        return _UserFormDialog(
-          user: user,
-          userService: userService,
-        );
+        return _UserFormDialog(user: user, userService: userService);
       },
     );
 
@@ -128,21 +113,17 @@ class _UserDesktopState extends State<UserDesktop> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: const Color(0xfff7f8fc),
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(30),
+      color: const Color(0xfff6f7fb),
+      child: Padding(
+        padding: const EdgeInsets.all(28),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildHeader(),
-
-            const SizedBox(height: 25),
-
+            const SizedBox(height: 22),
             _buildToolbar(),
-
-            const SizedBox(height: 20),
-
-            _buildUserTable(),
+            const SizedBox(height: 16),
+            Expanded(child: _buildUserTable()),
           ],
         ),
       ),
@@ -159,33 +140,29 @@ class _UserDesktopState extends State<UserDesktop> {
               Text(
                 'Management User',
                 style: TextStyle(
-                  fontSize: 30,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 28,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xff111827),
+                  letterSpacing: -0.5,
                 ),
               ),
-              SizedBox(height: 6),
+              SizedBox(height: 5),
               Text(
                 'Kelola akun dan hak akses pengguna sistem.',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey,
-                ),
+                style: TextStyle(fontSize: 13, color: Color(0xff6b7280)),
               ),
             ],
           ),
         ),
-
         OutlinedButton.icon(
           onPressed: isLoading ? null : _loadUsers,
-          icon: const Icon(Icons.refresh_rounded),
+          icon: const Icon(Icons.refresh_rounded, size: 18),
           label: const Text('Refresh'),
         ),
-
-        const SizedBox(width: 12),
-
+        const SizedBox(width: 10),
         ElevatedButton.icon(
           onPressed: () => _showUserForm(),
-          icon: const Icon(Icons.person_add_alt_1_rounded),
+          icon: const Icon(Icons.person_add_alt_1_rounded, size: 18),
           label: const Text('Tambah User'),
         ),
       ],
@@ -197,20 +174,11 @@ class _UserDesktopState extends State<UserDesktop> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: const Color(0xffe8e8ed),
-        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xffe5e7eb)),
       ),
       child: Row(
         children: [
-          const Icon(
-            Icons.search_rounded,
-            color: Colors.grey,
-          ),
-
-          const SizedBox(width: 10),
-
           Expanded(
             child: TextField(
               onChanged: (value) {
@@ -220,27 +188,35 @@ class _UserDesktopState extends State<UserDesktop> {
               },
               decoration: const InputDecoration(
                 hintText: 'Cari nama, email, atau role...',
-                border: InputBorder.none,
-                isDense: true,
+                prefixIcon: Icon(Icons.search_rounded, size: 20),
               ),
             ),
           ),
-
+          const SizedBox(width: 14),
           Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 7,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
             decoration: BoxDecoration(
-              color: const Color(0xfff1f5f9),
-              borderRadius: BorderRadius.circular(8),
+              color: const Color(0xfff8fafc),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xffe5e7eb)),
             ),
-            child: Text(
-              '${filteredUsers.length} User',
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.people_alt_outlined,
+                  size: 17,
+                  color: Color(0xff6b7280),
+                ),
+                const SizedBox(width: 7),
+                Text(
+                  '${filteredUsers.length} User',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xff374151),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -250,167 +226,177 @@ class _UserDesktopState extends State<UserDesktop> {
 
   Widget _buildUserTable() {
     if (isLoading) {
-      return const SizedBox(
-        height: 300,
-        child: Center(
-          child: CircularProgressIndicator(),
-        ),
+      return const AppStateView.loading(
+        title: "Memuat user",
+        message: "Sedang mengambil daftar akun pengguna.",
       );
     }
-
     if (filteredUsers.isEmpty) {
-      return Container(
-        height: 300,
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: const Color(0xffe8e8ed),
-          ),
-        ),
-        child: const Center(
-          child: Text(
-            'Belum ada user',
-            style: TextStyle(
-              color: Colors.grey,
-            ),
-          ),
-        ),
+      return AppStateView.empty(
+        icon: Icons.people_outline_rounded,
+        title: searchQuery.trim().isEmpty
+            ? "Belum ada user"
+            : "User tidak ditemukan",
+        message: searchQuery.trim().isEmpty
+            ? "Akun pengguna yang dibuat akan muncul di sini."
+            : "Coba gunakan nama, email, atau role yang berbeda.",
+        actionLabel: searchQuery.trim().isEmpty ? "Tambah User" : null,
+        onAction: searchQuery.trim().isEmpty ? () => _showUserForm() : null,
       );
     }
-
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: const Color(0xffe8e8ed),
-        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xffe5e7eb)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x06000000),
+            blurRadius: 12,
+            offset: Offset(0, 3),
+          ),
+        ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(14),
-        child: DataTable(
-          headingRowHeight: 52,
-          dataRowMinHeight: 64,
-          dataRowMaxHeight: 70,
-          columnSpacing: 35,
-          horizontalMargin: 20,
-          columns: const [
-            DataColumn(
-              label: Text(
-                'USER',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                ),
-              ),
-            ),
-            DataColumn(
-              label: Text(
-                'EMAIL',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                ),
-              ),
-            ),
-            DataColumn(
-              label: Text(
-                'ROLE',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                ),
-              ),
-            ),
-            DataColumn(
-              label: Text(
-                'AKSI',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                ),
-              ),
-            ),
-          ],
-          rows: filteredUsers.map((user) {
-            return DataRow(
-              cells: [
-                DataCell(
-                  Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 19,
-                        backgroundColor: Colors.blue.withOpacity(0.1),
-                        child: Text(
-                          user.name.isNotEmpty
-                              ? user.name[0].toUpperCase()
-                              : '?',
-                          style: const TextStyle(
-                            color: Colors.blue,
-                            fontWeight: FontWeight.bold,
+        borderRadius: BorderRadius.circular(16),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minWidth: constraints.maxWidth),
+                child: DataTable(
+                  headingRowColor: WidgetStateProperty.all(
+                    const Color(0xfff8fafc),
+                  ),
+                  headingRowHeight: 52,
+                  dataRowMinHeight: 66,
+                  dataRowMaxHeight: 72,
+                  columnSpacing: 40,
+                  horizontalMargin: 20,
+                  columns: const [
+                    DataColumn(
+                      label: Text(
+                        'USER',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 11,
+                          color: Color(0xff4b5563),
+                        ),
+                      ),
+                    ),
+                    DataColumn(
+                      label: Text(
+                        'EMAIL',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 11,
+                          color: Color(0xff4b5563),
+                        ),
+                      ),
+                    ),
+                    DataColumn(
+                      label: Text(
+                        'ROLE',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 11,
+                          color: Color(0xff4b5563),
+                        ),
+                      ),
+                    ),
+                    DataColumn(
+                      label: Text(
+                        'AKSI',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 11,
+                          color: Color(0xff4b5563),
+                        ),
+                      ),
+                    ),
+                  ],
+                  rows: filteredUsers.map((user) {
+                    return DataRow(
+                      cells: [
+                        DataCell(
+                          Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 19,
+                                backgroundColor: const Color(0xffeff6ff),
+                                child: Text(
+                                  user.name.isNotEmpty
+                                      ? user.name[0].toUpperCase()
+                                      : '?',
+                                  style: const TextStyle(
+                                    color: Color(0xff2563eb),
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                user.name,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xff111827),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ),
-
-                      const SizedBox(width: 12),
-
-                      Text(
-                        user.name,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
+                        DataCell(
+                          Text(
+                            user.email,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: Color(0xff6b7280),
+                            ),
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                DataCell(
-                  Text(
-                    user.email,
-                    style: const TextStyle(
-                      color: Colors.grey,
-                    ),
-                  ),
-                ),
-
-                DataCell(
-                  _buildRoleBadge(user.role),
-                ),
-
-                DataCell(
-                  Row(
-                    children: [
-                      IconButton(
-                        tooltip: 'Edit',
-                        onPressed: () {
-                          _showUserForm(user: user);
-                        },
-                        icon: const Icon(
-                          Icons.edit_outlined,
-                          size: 20,
+                        DataCell(_buildRoleBadge(user.role)),
+                        DataCell(
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                tooltip: 'Edit User',
+                                style: IconButton.styleFrom(
+                                  backgroundColor: const Color(0xffeff6ff),
+                                  foregroundColor: const Color(0xff2563eb),
+                                ),
+                                onPressed: () {
+                                  _showUserForm(user: user);
+                                },
+                                icon: const Icon(Icons.edit_outlined, size: 18),
+                              ),
+                              const SizedBox(width: 6),
+                              IconButton(
+                                tooltip: 'Hapus User',
+                                style: IconButton.styleFrom(
+                                  backgroundColor: const Color(0xfffff1f2),
+                                  foregroundColor: const Color(0xffdc2626),
+                                ),
+                                onPressed: () {
+                                  _deleteUser(user);
+                                },
+                                icon: const Icon(
+                                  Icons.delete_outline_rounded,
+                                  size: 18,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-
-                      IconButton(
-                        tooltip: 'Hapus',
-                        onPressed: () {
-                          _deleteUser(user);
-                        },
-                        icon: const Icon(
-                          Icons.delete_outline_rounded,
-                          size: 20,
-                          color: Colors.red,
-                        ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    );
+                  }).toList(),
                 ),
-              ],
+              ),
             );
-          }).toList(),
+          },
         ),
       ),
     );
@@ -419,42 +405,39 @@ class _UserDesktopState extends State<UserDesktop> {
   Widget _buildRoleBadge(String role) {
     String label;
     Color color;
-
+    Color background;
     switch (role) {
       case 'admin':
         label = 'Admin';
-        color = Colors.blue;
+        color = const Color(0xff2563eb);
+        background = const Color(0xffeff6ff);
         break;
-
       case 'user':
         label = 'User';
-        color = Colors.green;
+        color = const Color(0xff16a34a);
+        background = const Color(0xffecfdf3);
         break;
-
       case 'view_only':
         label = 'Viewer';
-        color = Colors.orange;
+        color = const Color(0xffd97706);
+        background = const Color(0xfffff7ed);
         break;
-
       default:
         label = role;
-        color = Colors.grey;
+        color = const Color(0xff6b7280);
+        background = const Color(0xfff3f4f6);
     }
-
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 10,
-        vertical: 6,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
+        color: background,
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
         label,
         style: TextStyle(
           color: color,
-          fontSize: 12,
+          fontSize: 11,
           fontWeight: FontWeight.w600,
         ),
       ),
@@ -466,10 +449,7 @@ class _UserFormDialog extends StatefulWidget {
   final UserModel? user;
   final UserService userService;
 
-  const _UserFormDialog({
-    required this.user,
-    required this.userService,
-  });
+  const _UserFormDialog({required this.user, required this.userService});
 
   @override
   State<_UserFormDialog> createState() => _UserFormDialogState();
@@ -490,13 +470,9 @@ class _UserFormDialogState extends State<_UserFormDialog> {
   void initState() {
     super.initState();
 
-    nameController = TextEditingController(
-      text: widget.user?.name ?? '',
-    );
+    nameController = TextEditingController(text: widget.user?.name ?? '');
 
-    emailController = TextEditingController(
-      text: widget.user?.email ?? '',
-    );
+    emailController = TextEditingController(text: widget.user?.email ?? '');
 
     passwordController = TextEditingController();
 
@@ -519,9 +495,7 @@ class _UserFormDialogState extends State<_UserFormDialog> {
 
     if (!isEdit && passwordController.text.length < 6) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Password minimal 6 karakter'),
-        ),
+        const SnackBar(content: Text('Password minimal 6 karakter')),
       );
       return;
     }
@@ -560,9 +534,7 @@ class _UserFormDialogState extends State<_UserFormDialog> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            isEdit
-                ? 'Gagal memperbarui user'
-                : 'Gagal menambahkan user',
+            isEdit ? 'Gagal memperbarui user' : 'Gagal menambahkan user',
           ),
         ),
       );
@@ -572,120 +544,193 @@ class _UserFormDialogState extends State<_UserFormDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(
-        isEdit ? 'Edit User' : 'Tambah User',
-      ),
+      titlePadding: EdgeInsets.zero,
+      contentPadding: EdgeInsets.zero,
+      actionsPadding: EdgeInsets.zero,
       content: SizedBox(
-        width: 450,
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Nama',
-                  prefixIcon: Icon(Icons.person_outline),
-                  border: OutlineInputBorder(),
-                ),
-              ),
-
-              const SizedBox(height: 15),
-
-              TextField(
-                controller: emailController,
-                keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                  prefixIcon: Icon(Icons.email_outlined),
-                  border: OutlineInputBorder(),
-                ),
-              ),
-
-              const SizedBox(height: 15),
-
-              if (!isEdit)
-                TextField(
-                  controller: passwordController,
-                  obscureText: obscurePassword,
-                  decoration: InputDecoration(
-                    labelText: 'Password',
-                    prefixIcon: const Icon(Icons.lock_outline),
-                    border: const OutlineInputBorder(),
-                    suffixIcon: IconButton(
-                      onPressed: () {
-                        setState(() {
-                          obscurePassword = !obscurePassword;
-                        });
-                      },
-                      icon: Icon(
-                        obscurePassword
-                            ? Icons.visibility_outlined
-                            : Icons.visibility_off_outlined,
-                      ),
+        width: 480,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 22, 24, 18),
+              child: Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: const Color(0xffeff6ff),
+                      borderRadius: BorderRadius.circular(11),
+                    ),
+                    child: Icon(
+                      isEdit
+                          ? Icons.edit_outlined
+                          : Icons.person_add_alt_1_rounded,
+                      color: const Color(0xff2563eb),
+                      size: 21,
                     ),
                   ),
-                ),
-
-              if (!isEdit)
-                const SizedBox(height: 15),
-
-              DropdownButtonFormField<String>(
-                value: role,
-                decoration: const InputDecoration(
-                  labelText: 'Role',
-                  prefixIcon: Icon(Icons.security_outlined),
-                  border: OutlineInputBorder(),
-                ),
-                items: const [
-                  DropdownMenuItem(
-                    value: 'admin',
-                    child: Text('Admin'),
-                  ),
-                  DropdownMenuItem(
-                    value: 'user',
-                    child: Text('User'),
-                  ),
-                  DropdownMenuItem(
-                    value: 'view_only',
-                    child: Text('Viewer'),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          isEdit ? 'Edit User' : 'Tambah User',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xff111827),
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          isEdit
+                              ? 'Perbarui informasi dan hak akses user.'
+                              : 'Buat akun baru untuk mengakses sistem.',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Color(0xff6b7280),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
-                onChanged: (value) {
-                  if (value == null) return;
-
-                  setState(() {
-                    role = value;
-                  });
-                },
               ),
-            ],
-          ),
+            ),
+            const Divider(height: 1),
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                children: [
+                  TextField(
+                    controller: nameController,
+                    textInputAction: TextInputAction.next,
+                    decoration: const InputDecoration(
+                      labelText: 'Nama',
+                      hintText: 'Nama pengguna',
+                      prefixIcon: Icon(Icons.person_outline),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    textInputAction: TextInputAction.next,
+                    decoration: const InputDecoration(
+                      labelText: 'Email',
+                      hintText: 'nama@perusahaan.com',
+                      prefixIcon: Icon(Icons.email_outlined),
+                    ),
+                  ),
+                  if (!isEdit) ...[
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: passwordController,
+                      obscureText: obscurePassword,
+                      textInputAction: TextInputAction.next,
+                      decoration: InputDecoration(
+                        labelText: 'Password',
+                        hintText: 'Minimal 6 karakter',
+                        prefixIcon: const Icon(Icons.lock_outline),
+                        suffixIcon: IconButton(
+                          onPressed: () {
+                            setState(() {
+                              obscurePassword = !obscurePassword;
+                            });
+                          },
+                          icon: Icon(
+                            obscurePassword
+                                ? Icons.visibility_outlined
+                                : Icons.visibility_off_outlined,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    initialValue: role,
+                    decoration: const InputDecoration(
+                      labelText: 'Role',
+                      prefixIcon: Icon(Icons.admin_panel_settings_outlined),
+                    ),
+                    items: const [
+                      DropdownMenuItem(
+                        value: 'admin',
+                        child: Text('Admin — Akses penuh'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'user',
+                        child: Text('User — Operasional'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'view_only',
+                        child: Text('Viewer — Hanya melihat'),
+                      ),
+                    ],
+                    onChanged: loading
+                        ? null
+                        : (value) {
+                            if (value == null) {
+                              return;
+                            }
+                            setState(() {
+                              role = value;
+                            });
+                          },
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            Padding(
+              padding: const EdgeInsets.all(18),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  OutlinedButton(
+                    onPressed: loading
+                        ? null
+                        : () {
+                            Navigator.pop(context);
+                          },
+                    child: const Text('Batal'),
+                  ),
+                  const SizedBox(width: 10),
+                  ElevatedButton.icon(
+                    onPressed: loading ? null : save,
+                    icon: loading
+                        ? const SizedBox(
+                            width: 17,
+                            height: 17,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : Icon(
+                            isEdit
+                                ? Icons.save_outlined
+                                : Icons.person_add_alt_1_rounded,
+                            size: 18,
+                          ),
+                    label: Text(
+                      loading
+                          ? 'Menyimpan...'
+                          : isEdit
+                          ? 'Simpan Perubahan'
+                          : 'Tambah User',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: loading
-              ? null
-              : () => Navigator.pop(context),
-          child: const Text('Batal'),
-        ),
-
-        ElevatedButton(
-          onPressed: loading ? null : save,
-          child: loading
-              ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                  ),
-                )
-              : Text(
-                  isEdit ? 'Simpan Perubahan' : 'Tambah User',
-                ),
-        ),
-      ],
     );
   }
 }

@@ -1,6 +1,9 @@
-// ignore_for_file: use_build_context_synchronously, avoid_print
+// ignore_for_file: use_build_context_synchronously
 
 import 'package:flutter/material.dart';
+import 'package:flutter_inventory/core/ui/app_state_view.dart';
+import 'package:flutter_inventory/core/ui/app_feedback.dart';
+import 'package:intl/intl.dart';
 
 import 'package:flutter_inventory/core/services/auth_service.dart';
 import 'package:flutter_inventory/core/services/barang_service.dart';
@@ -23,8 +26,7 @@ class _InventoryDesktopState extends State<InventoryDesktop> {
   final BarangService barangService = BarangService();
   final AuthService authService = AuthService();
 
-  final TextEditingController searchController =
-      TextEditingController();
+  final TextEditingController searchController = TextEditingController();
 
   List<Barang> barangList = [];
 
@@ -73,8 +75,7 @@ class _InventoryDesktopState extends State<InventoryDesktop> {
         isLoading = false;
       });
     } catch (e) {
-      print(e);
-
+      debugPrint("Inventory error: $e");
       if (!mounted) return;
 
       setState(() {
@@ -82,11 +83,7 @@ class _InventoryDesktopState extends State<InventoryDesktop> {
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            "Gagal mengambil data barang",
-          ),
-        ),
+        const SnackBar(content: Text("Gagal mengambil data barang")),
       );
     }
   }
@@ -119,9 +116,7 @@ class _InventoryDesktopState extends State<InventoryDesktop> {
     });
 
     try {
-      final result = await barangService.getBarangPerPage(
-        currentPage + 1,
-      );
+      final result = await barangService.getBarangPerPage(currentPage + 1);
 
       if (!mounted) return;
 
@@ -134,8 +129,7 @@ class _InventoryDesktopState extends State<InventoryDesktop> {
         isLoadMore = false;
       });
     } catch (e) {
-      print(e);
-
+      debugPrint("Inventory error: $e");
       if (!mounted) return;
 
       setState(() {
@@ -155,9 +149,7 @@ class _InventoryDesktopState extends State<InventoryDesktop> {
         return;
       }
 
-      final data = await barangService.searchBarang(
-        keyword.trim(),
-      );
+      final data = await barangService.searchBarang(keyword.trim());
 
       if (!mounted) return;
 
@@ -168,17 +160,12 @@ class _InventoryDesktopState extends State<InventoryDesktop> {
         lastPage = 1;
       });
     } catch (e) {
-      print(e);
-
+      debugPrint("Inventory error: $e");
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            "Gagal mencari barang",
-          ),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Gagal mencari barang")));
     }
   }
 
@@ -187,67 +174,29 @@ class _InventoryDesktopState extends State<InventoryDesktop> {
   // ============================================================
 
   Future<void> hapusBarang(Barang barang) async {
-    final konfirmasi = await showDialog<bool>(
-      context: context,
-      builder: (_) {
-        return AlertDialog(
-          title: const Text(
-            "Hapus Barang",
-          ),
-          content: Text(
-            "Yakin ingin menghapus ${barang.namaBarang}?",
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(
-                  context,
-                  false,
-                );
-              },
-              child: const Text(
-                "Batal",
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(
-                  context,
-                  true,
-                );
-              },
-              child: const Text(
-                "Hapus",
-              ),
-            ),
-          ],
-        );
-      },
+    final konfirmasi = await AppFeedback.confirmDelete(
+      context,
+      title: "Hapus Barang",
+      message:
+          'Barang "${barang.namaBarang}" akan dihapus dari inventory. Tindakan ini tidak dapat dibatalkan.',
     );
 
-    if (konfirmasi != true) return;
+    if (!konfirmasi) return;
 
-    final berhasil = await barangService.deleteBarang(
-      barang.id,
-    );
-
-    if (!mounted) return;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          berhasil
-              ? "Barang berhasil dihapus"
-              : "Gagal menghapus barang",
-        ),
-      ),
-    );
-
-    if (berhasil) {
-      loadBarang();
+    try {
+      final berhasil = await barangService.deleteBarang(barang.id);
+      if (!mounted) return;
+      if (berhasil) {
+        AppFeedback.success(context, "Barang berhasil dihapus");
+        await loadBarang();
+      } else {
+        AppFeedback.error(context, "Gagal menghapus barang");
+      }
+    } catch (_) {
+      if (!mounted) return;
+      AppFeedback.error(context, "Terjadi kesalahan saat menghapus barang");
     }
   }
-
   // ============================================================
   // TAMBAH BARANG
   // ============================================================
@@ -255,9 +204,7 @@ class _InventoryDesktopState extends State<InventoryDesktop> {
   Future<void> barangMasuk() async {
     final result = await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => const BarangMasukPage(),
-      ),
+      MaterialPageRoute(builder: (_) => const BarangMasukPage()),
     );
 
     if (mounted && result == true) {
@@ -268,9 +215,7 @@ class _InventoryDesktopState extends State<InventoryDesktop> {
   Future<void> barangKeluar() async {
     final result = await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => const BarangKeluarPage(),
-      ),
+      MaterialPageRoute(builder: (_) => const BarangKeluarPage()),
     );
 
     if (mounted && result == true) {
@@ -281,9 +226,7 @@ class _InventoryDesktopState extends State<InventoryDesktop> {
   Future<void> tambahBarang() async {
     final result = await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => const TambahBarangPage(),
-      ),
+      MaterialPageRoute(builder: (_) => const TambahBarangPage()),
     );
 
     if (result == true) {
@@ -298,11 +241,7 @@ class _InventoryDesktopState extends State<InventoryDesktop> {
   Future<void> editBarang(Barang barang) async {
     final result = await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => EditBarangPage(
-          barang: barang,
-        ),
-      ),
+      MaterialPageRoute(builder: (_) => EditBarangPage(barang: barang)),
     );
 
     if (result == true) {
@@ -315,7 +254,11 @@ class _InventoryDesktopState extends State<InventoryDesktop> {
   // ============================================================
 
   String formatHarga(double harga) {
-    return "Rp ${harga.toStringAsFixed(0)}";
+    return NumberFormat.currency(
+      locale: 'id_ID',
+      symbol: 'Rp ',
+      decimalDigits: 0,
+    ).format(harga);
   }
 
   // ============================================================
@@ -334,7 +277,6 @@ class _InventoryDesktopState extends State<InventoryDesktop> {
             // ==================================================
             // HEADER
             // ==================================================
-
             Row(
               children: [
                 const Column(
@@ -350,17 +292,14 @@ class _InventoryDesktopState extends State<InventoryDesktop> {
                     SizedBox(height: 5),
                     Text(
                       "Daftar barang inventory",
-                      style: TextStyle(
-                        color: Colors.grey,
-                        fontSize: 15,
-                      ),
+                      style: TextStyle(color: Colors.grey, fontSize: 15),
                     ),
                   ],
                 ),
 
                 const SizedBox(width: 20),
 
-                if (role != "view_only")
+                if (role == "admin" || role == "user")
                   Expanded(
                     child: Wrap(
                       alignment: WrapAlignment.end,
@@ -393,17 +332,14 @@ class _InventoryDesktopState extends State<InventoryDesktop> {
             // ==================================================
             // SEARCH
             // ==================================================
-
             Row(
               children: [
                 Expanded(
                   child: TextField(
                     controller: searchController,
                     decoration: InputDecoration(
-                      hintText: "Cari barang...",
-                      prefixIcon: const Icon(
-                        Icons.search,
-                      ),
+                      hintText: "Cari nama barang...",
+                      prefixIcon: const Icon(Icons.search_rounded, size: 20),
                       filled: true,
                       fillColor: Colors.white,
                       border: OutlineInputBorder(
@@ -418,11 +354,13 @@ class _InventoryDesktopState extends State<InventoryDesktop> {
                 const SizedBox(width: 15),
 
                 IconButton(
-                  tooltip: "Refresh",
-                  onPressed: loadBarang,
-                  icon: const Icon(
-                    Icons.refresh,
+                  tooltip: "Refresh Data",
+                  style: IconButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    side: const BorderSide(color: Color(0xffe5e7eb)),
                   ),
+                  onPressed: loadBarang,
+                  icon: const Icon(Icons.refresh_rounded, size: 20),
                 ),
               ],
             ),
@@ -432,165 +370,169 @@ class _InventoryDesktopState extends State<InventoryDesktop> {
             // ==================================================
             // TABLE
             // ==================================================
-
             Expanded(
               child: Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xffe5e7eb)),
+                  boxShadow: const [
                     BoxShadow(
-                      color: Colors.black.withValues(
-                        alpha: 0.05,
-                      ),
-                      blurRadius: 8,
+                      color: Color(0x08000000),
+                      blurRadius: 14,
+                      offset: Offset(0, 4),
                     ),
                   ],
                 ),
                 child: isLoading
-                    ? const Center(
-                        child: CircularProgressIndicator(),
+                    ? const AppStateView.loading(
+                        title: "Memuat inventory",
+                        message: "Sedang mengambil data barang.",
                       )
                     : barangList.isEmpty
-                        ? const Center(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.inventory_2_outlined,
-                                  size: 60,
-                                  color: Colors.grey,
-                                ),
-                                SizedBox(height: 15),
-                                Text(
-                                  "Belum ada barang",
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
-                        : NotificationListener<ScrollNotification>(
-                            onNotification: (notification) {
-                              if (notification
-                                  is ScrollEndNotification) {
-                                if (notification.metrics.pixels >=
-                                    notification.metrics.maxScrollExtent) {
-                                  loadMoreBarang();
-                                }
-                              }
+                    ? AppStateView.empty(
+                        icon: Icons.inventory_2_outlined,
+                        title: searchController.text.trim().isNotEmpty
+                            ? "Barang tidak ditemukan"
+                            : "Belum ada barang",
+                        message: searchController.text.trim().isNotEmpty
+                            ? "Coba gunakan kata pencarian yang berbeda."
+                            : "Barang yang ditambahkan akan muncul di sini.",
+                        actionLabel:
+                            searchController.text.trim().isEmpty &&
+                                (role == "admin" || role == "user")
+                            ? "Tambah Barang"
+                            : null,
+                        onAction:
+                            searchController.text.trim().isEmpty &&
+                                (role == "admin" || role == "user")
+                            ? tambahBarang
+                            : null,
+                      )
+                    : NotificationListener<ScrollNotification>(
+                        onNotification: (notification) {
+                          if (notification is ScrollEndNotification) {
+                            if (notification.metrics.pixels >=
+                                notification.metrics.maxScrollExtent) {
+                              loadMoreBarang();
+                            }
+                          }
 
-                              return false;
-                            },
-                            child: SingleChildScrollView(
+                          return false;
+                        },
+                        child: LayoutBuilder(
+                          builder: (context, constraints) {
+                            return SingleChildScrollView(
                               scrollDirection: Axis.horizontal,
-                              child: DataTable(
-                                headingRowColor:
-                                    WidgetStateProperty.all(
-                                  const Color(
-                                    0xfff1f3f6,
-                                  ),
+                              child: ConstrainedBox(
+                                constraints: BoxConstraints(
+                                  minWidth: constraints.maxWidth,
                                 ),
-                                columns: const [
-                                  DataColumn(
-                                    label: Text(
-                                      "No",
-                                      style: TextStyle(
-                                        fontWeight:
-                                            FontWeight.bold,
+                                child: DataTable(
+                                  columnSpacing: 38,
+                                  horizontalMargin: 20,
+                                  headingRowHeight: 52,
+                                  dataRowMinHeight: 52,
+                                  dataRowMaxHeight: 60,
+                                  headingRowColor: WidgetStateProperty.all(
+                                    const Color(0xfff8fafc),
+                                  ),
+                                  columns: const [
+                                    DataColumn(
+                                      label: Text(
+                                        "No",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 12,
+                                          color: Color(0xff4b5563),
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  DataColumn(
-                                    label: Text(
-                                      "Nama Barang",
-                                      style: TextStyle(
-                                        fontWeight:
-                                            FontWeight.bold,
+                                    DataColumn(
+                                      label: Text(
+                                        "Nama Barang",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 12,
+                                          color: Color(0xff4b5563),
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  DataColumn(
-                                    label: Text(
-                                      "Stock",
-                                      style: TextStyle(
-                                        fontWeight:
-                                            FontWeight.bold,
+                                    DataColumn(
+                                      label: Text(
+                                        "Stock",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 12,
+                                          color: Color(0xff4b5563),
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  DataColumn(
-                                    label: Text(
-                                      "Harga",
-                                      style: TextStyle(
-                                        fontWeight:
-                                            FontWeight.bold,
+                                    DataColumn(
+                                      label: Text(
+                                        "Harga",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 12,
+                                          color: Color(0xff4b5563),
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  DataColumn(
-                                    label: Text(
-                                      "Lokasi",
-                                      style: TextStyle(
-                                        fontWeight:
-                                            FontWeight.bold,
+                                    DataColumn(
+                                      label: Text(
+                                        "Lokasi",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 12,
+                                          color: Color(0xff4b5563),
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  DataColumn(
-                                    label: Text(
-                                      "Status",
-                                      style: TextStyle(
-                                        fontWeight:
-                                            FontWeight.bold,
+                                    DataColumn(
+                                      label: Text(
+                                        "Status",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 12,
+                                          color: Color(0xff4b5563),
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  DataColumn(
-                                    label: Text(
-                                      "Aksi",
-                                      style: TextStyle(
-                                        fontWeight:
-                                            FontWeight.bold,
+                                    DataColumn(
+                                      label: Text(
+                                        "Aksi",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 12,
+                                          color: Color(0xff4b5563),
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                ],
-                                rows: List.generate(
-                                  barangList.length,
-                                  (index) {
-                                    final barang =
-                                        barangList[index];
+                                  ],
+                                  rows: List.generate(barangList.length, (
+                                    index,
+                                  ) {
+                                    final barang = barangList[index];
 
-                                    final stock =
-                                        barang.stock;
+                                    final stock = barang.stock;
 
                                     return DataRow(
                                       cells: [
                                         // ==========================
                                         // NO
                                         // ==========================
-
-                                        DataCell(
-                                          Text(
-                                            "${index + 1}",
-                                          ),
-                                        ),
+                                        DataCell(Text("${index + 1}")),
 
                                         // ==========================
                                         // NAMA BARANG
                                         // ==========================
-
                                         DataCell(
                                           Text(
                                             barang.namaBarang,
-                                            style:
-                                                const TextStyle(
-                                              fontWeight:
-                                                  FontWeight.w500,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w600,
+                                              color: Color(0xff111827),
                                             ),
                                           ),
                                         ),
@@ -598,29 +540,18 @@ class _InventoryDesktopState extends State<InventoryDesktop> {
                                         // ==========================
                                         // STOCK
                                         // ==========================
-
-                                        DataCell(
-                                          Text(
-                                            stock.toString(),
-                                          ),
-                                        ),
+                                        DataCell(Text(stock.toString())),
 
                                         // ==========================
                                         // HARGA
                                         // ==========================
-
                                         DataCell(
-                                          Text(
-                                            formatHarga(
-                                              barang.harga,
-                                            ),
-                                          ),
+                                          Text(formatHarga(barang.harga)),
                                         ),
 
                                         // ==========================
                                         // LOKASI
                                         // ==========================
-
                                         DataCell(
                                           Text(
                                             barang.lokasi == null ||
@@ -635,31 +566,18 @@ class _InventoryDesktopState extends State<InventoryDesktop> {
                                         // ==========================
                                         // STATUS
                                         // ==========================
-
                                         DataCell(
                                           Container(
-                                            padding:
-                                                const EdgeInsets
-                                                    .symmetric(
+                                            padding: const EdgeInsets.symmetric(
                                               horizontal: 10,
                                               vertical: 5,
                                             ),
-                                            decoration:
-                                                BoxDecoration(
+                                            decoration: BoxDecoration(
                                               color: stock <= 5
-                                                  ? Colors.red
-                                                      .withValues(
-                                                      alpha: 0.1,
-                                                    )
-                                                  : Colors.green
-                                                      .withValues(
-                                                      alpha: 0.1,
-                                                    ),
+                                                  ? const Color(0xffffeded)
+                                                  : const Color(0xffecfdf3),
                                               borderRadius:
-                                                  BorderRadius
-                                                      .circular(
-                                                20,
-                                              ),
+                                                  BorderRadius.circular(20),
                                             ),
                                             child: Text(
                                               stock <= 5
@@ -667,10 +585,9 @@ class _InventoryDesktopState extends State<InventoryDesktop> {
                                                   : "Aman",
                                               style: TextStyle(
                                                 color: stock <= 5
-                                                    ? Colors.red
-                                                    : Colors.green,
-                                                fontWeight:
-                                                    FontWeight.w600,
+                                                    ? const Color(0xffdc2626)
+                                                    : const Color(0xff16a34a),
+                                                fontWeight: FontWeight.w600,
                                               ),
                                             ),
                                           ),
@@ -679,64 +596,71 @@ class _InventoryDesktopState extends State<InventoryDesktop> {
                                         // ==========================
                                         // AKSI
                                         // ==========================
-
                                         DataCell(
                                           Row(
-                                            mainAxisSize:
-                                                MainAxisSize.min,
+                                            mainAxisSize: MainAxisSize.min,
                                             children: [
                                               if (role == "admin" ||
                                                   role == "user")
                                                 IconButton(
-                                                  tooltip: "Edit",
-                                                  icon:
-                                                      const Icon(
-                                                    Icons
-                                                        .edit_outlined,
+                                                  tooltip: "Edit Barang",
+                                                  style: IconButton.styleFrom(
+                                                    backgroundColor:
+                                                        const Color(0xffeff6ff),
+                                                    foregroundColor:
+                                                        const Color(0xff2563eb),
+                                                  ),
+                                                  icon: const Icon(
+                                                    Icons.edit_outlined,
+                                                    size: 18,
                                                   ),
                                                   onPressed: () =>
-                                                      editBarang(
-                                                    barang,
-                                                  ),
+                                                      editBarang(barang),
                                                 ),
 
                                               if (role == "admin")
                                                 IconButton(
-                                                  tooltip: "Hapus",
-                                                  icon:
-                                                      const Icon(
-                                                    Icons
-                                                        .delete_outline,
-                                                    color:
-                                                        Colors.red,
+                                                  tooltip: "Hapus Barang",
+                                                  style: IconButton.styleFrom(
+                                                    backgroundColor:
+                                                        const Color(0xfffff1f2),
+                                                    foregroundColor:
+                                                        const Color(0xffdc2626),
+                                                  ),
+                                                  icon: const Icon(
+                                                    Icons.delete_outline,
+                                                    size: 18,
                                                   ),
                                                   onPressed: () =>
-                                                      hapusBarang(
-                                                    barang,
-                                                  ),
+                                                      hapusBarang(barang),
                                                 ),
                                             ],
                                           ),
                                         ),
                                       ],
                                     );
-                                  },
+                                  }),
                                 ),
                               ),
-                            ),
-                          ),
+                            );
+                          },
+                        ),
+                      ),
               ),
             ),
 
             // ==================================================
             // LOADING MORE
             // ==================================================
-
             if (isLoadMore)
               const Padding(
-                padding: EdgeInsets.all(10),
+                padding: EdgeInsets.symmetric(vertical: 10),
                 child: Center(
-                  child: CircularProgressIndicator(),
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
                 ),
               ),
           ],

@@ -1,5 +1,3 @@
-// ignore_for_file: avoid_print
-
 import 'dart:typed_data';
 // ignore: avoid_web_libraries_in_flutter, deprecated_member_use
 import 'dart:html' as html;
@@ -62,9 +60,7 @@ class ExportService {
 
       html.Url.revokeObjectUrl(url);
 
-      print("Excel berhasil didownload");
     } catch (e) {
-      print("Export error: $e");
       rethrow;
     }
   }

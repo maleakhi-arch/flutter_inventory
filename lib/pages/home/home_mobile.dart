@@ -1,4 +1,4 @@
-// ignore_for_file: use_build_context_synchronously, avoid_print
+// ignore_for_file: use_build_context_synchronously
 
 import 'package:flutter/material.dart';
 
@@ -84,7 +84,6 @@ class _HomeMobileState extends State<HomeMobile> {
         isLoading = false;
       });
     } catch (e) {
-      print(e);
 
       if (!mounted) return;
 
@@ -126,7 +125,6 @@ class _HomeMobileState extends State<HomeMobile> {
         isLoadMore = false;
       });
     } catch (e) {
-      print(e);
 
       if (!mounted) return;
 
@@ -151,8 +149,8 @@ class _HomeMobileState extends State<HomeMobile> {
       setState(() {
         barangList = data;
       });
+    // ignore: empty_catches
     } catch (e) {
-      print(e);
     }
   }
 

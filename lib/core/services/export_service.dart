@@ -1,5 +1,3 @@
-// ignore_for_file: avoid_print
-
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
@@ -69,8 +67,6 @@ class ExportService {
 
         html.Url.revokeObjectUrl(url);
 
-        print("Excel berhasil didownload");
-
         return;
       }
 
@@ -95,11 +91,7 @@ class ExportService {
       );
 
       await OpenFilex.open(filePath);
-
-      print("Export berhasil");
-      print(filePath);
-    } catch (e) {
-      print("Export error: $e");
+    } catch (_) {
       rethrow;
     }
   }

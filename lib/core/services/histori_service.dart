@@ -1,5 +1,3 @@
-// ignore_for_file: avoid_print
-
 import 'dart:convert';
 
 import 'package:flutter_inventory/core/api/api_endpoints.dart';
@@ -34,8 +32,6 @@ class HistoriService {
       token: token,
     );
 
-    print("STATUS CODE HISTORI = ${response.statusCode}");
-
     if (response.statusCode == 200) {
       final json = jsonDecode(response.body);
 
@@ -49,8 +45,6 @@ class HistoriService {
           )
           .toList();
     }
-
-    print("BODY HISTORI ERROR = ${response.body}");
 
     throw Exception(
       "Gagal mengambil histori (${response.statusCode})",

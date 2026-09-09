@@ -1,5 +1,3 @@
-// ignore_for_file: avoid_print
-
 import 'dart:convert';
 
 import 'package:flutter_inventory/core/api/api_endpoints.dart';
@@ -19,15 +17,10 @@ class BarangService {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString("token");
 
-    print("TOKEN = $token");
-
     final response = await apiService.getRequest(
-      ApiEndpoints.barang,
+      "${ApiEndpoints.barang}?per_page=100",
       token: token,
     );
-
-    print("STATUS = ${response.statusCode}");
-    print("BODY = ${response.body}");
 
     if (response.statusCode == 200) {
       final json = jsonDecode(response.body);
@@ -62,9 +55,6 @@ class BarangService {
       },
       token: token,
     );
-
-    print("TAMBAH BARANG STATUS = ${response.statusCode}");
-    print("TAMBAH BARANG BODY = ${response.body}");
 
     return response.statusCode == 201;
   }
@@ -102,9 +92,6 @@ class BarangService {
       token: token,
     );
 
-    print("UPDATE BARANG STATUS = ${response.statusCode}");
-    print("UPDATE BARANG BODY = ${response.body}");
-
     return response.statusCode == 200;
   }
 
@@ -121,9 +108,6 @@ class BarangService {
       token: token,
     );
 
-    print("DELETE BARANG STATUS = ${response.statusCode}");
-    print("DELETE BARANG BODY = ${response.body}");
-
     return response.statusCode == 200;
   }
 
@@ -138,15 +122,10 @@ class BarangService {
     final url =
         "${ApiEndpoints.barang}?search=${Uri.encodeQueryComponent(keyword)}";
 
-    print("URL = $url");
-
     final response = await apiService.getRequest(
       url,
       token: token,
     );
-
-    print("STATUS = ${response.statusCode}");
-    print("BODY = ${response.body}");
 
     if (response.statusCode == 200) {
       final json = jsonDecode(response.body);
@@ -170,9 +149,6 @@ class BarangService {
       "${ApiEndpoints.barang}?page=$page",
       token: token,
     );
-
-    print("STATUS = ${response.statusCode}");
-    print("BODY = ${response.body}");
 
     if (response.statusCode == 200) {
       final json = jsonDecode(response.body);
@@ -217,9 +193,6 @@ class BarangService {
       token: token,
     );
 
-    print("BARANG MASUK STATUS = ${response.statusCode}");
-    print("BARANG MASUK BODY = ${response.body}");
-
     return response.statusCode == 201;
   }
 
@@ -254,9 +227,6 @@ class BarangService {
       },
       token: token,
     );
-
-    print("BARANG KELUAR STATUS = ${response.statusCode}");
-    print("BARANG KELUAR BODY = ${response.body}");
 
     return response.statusCode == 201;
   }

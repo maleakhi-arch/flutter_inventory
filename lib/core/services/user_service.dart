@@ -1,5 +1,3 @@
-// ignore_for_file: avoid_print
-
 import 'dart:convert';
 
 import 'package:flutter_inventory/core/api/api_endpoints.dart';
@@ -48,12 +46,6 @@ class UserService {
       "role": role,
     }, token: token);
 
-    print("========== TAMBAH USER ==========");
-    print("URL : ${ApiEndpoints.users}");
-    print("STATUS : ${response.statusCode}");
-    print("BODY : ${response.body}");
-    print("=================================");
-
     return response.statusCode == 201;
   }
 
@@ -73,12 +65,6 @@ class UserService {
       "role": role,
     }, token: token);
 
-    print("========== UPDATE USER ==========");
-    print("URL : ${ApiEndpoints.user}/$id");
-    print("STATUS : ${response.statusCode}");
-    print("BODY : ${response.body}");
-    print("================================");
-
     return response.statusCode == 200;
   }
 
@@ -91,11 +77,6 @@ class UserService {
       "${ApiEndpoints.users}/$id",
       token: token,
     );
-
-    print("========== DELETE USER ==========");
-    print("STATUS : ${response.statusCode}");
-    print("BODY : ${response.body}");
-    print("================================");
 
     return response.statusCode == 200;
   }

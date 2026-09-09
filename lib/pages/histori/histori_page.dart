@@ -1,6 +1,5 @@
-// ignore_for_file: avoid_print
-
 import 'package:flutter/material.dart';
+import 'package:flutter_inventory/core/ui/app_state_view.dart';
 import 'package:intl/intl.dart';
 
 import 'package:flutter_inventory/core/services/histori_service.dart';
@@ -15,8 +14,7 @@ class HistoriPage extends StatefulWidget {
 
 class _HistoriPageState extends State<HistoriPage> {
   final HistoriService historiService = HistoriService();
-  final TextEditingController searchController =
-      TextEditingController();
+  final TextEditingController searchController = TextEditingController();
 
   List<HistoriStok> semuaHistori = [];
   List<HistoriStok> historiList = [];
@@ -41,9 +39,7 @@ class _HistoriPageState extends State<HistoriPage> {
   // LOAD DATA
   // =========================================================
 
-  Future<void> loadHistori({
-    String search = "",
-  }) async {
+  Future<void> loadHistori({String search = ""}) async {
     try {
       if (mounted) {
         setState(() {
@@ -51,9 +47,7 @@ class _HistoriPageState extends State<HistoriPage> {
         });
       }
 
-      final data = await historiService.getHistori(
-        search: search,
-      );
+      final data = await historiService.getHistori(search: search);
 
       if (!mounted) return;
 
@@ -63,7 +57,7 @@ class _HistoriPageState extends State<HistoriPage> {
         isLoading = false;
       });
     } catch (e) {
-      print("ERROR HISTORI = $e");
+      debugPrint("ERROR HISTORI = $e");
 
       if (!mounted) return;
 
@@ -73,44 +67,22 @@ class _HistoriPageState extends State<HistoriPage> {
     }
   }
 
-  List<HistoriStok> _filterData(
-    List<HistoriStok> data,
-  ) {
+  List<HistoriStok> _filterData(List<HistoriStok> data) {
     switch (selectedFilter) {
       case "masuk":
-        return data
-            .where(
-              (e) => e.jenisTransaksi == "masuk",
-            )
-            .toList();
+        return data.where((e) => e.jenisTransaksi == "masuk").toList();
 
       case "keluar":
-        return data
-            .where(
-              (e) => e.jenisTransaksi == "keluar",
-            )
-            .toList();
+        return data.where((e) => e.jenisTransaksi == "keluar").toList();
 
       case "tambah":
-        return data
-            .where(
-              (e) => e.aksi == "tambah",
-            )
-            .toList();
+        return data.where((e) => e.aksi == "tambah").toList();
 
       case "edit":
-        return data
-            .where(
-              (e) => e.aksi == "edit",
-            )
-            .toList();
+        return data.where((e) => e.aksi == "edit").toList();
 
       case "hapus":
-        return data
-            .where(
-              (e) => e.aksi == "hapus",
-            )
-            .toList();
+        return data.where((e) => e.aksi == "hapus").toList();
 
       default:
         return data;
@@ -134,14 +106,9 @@ class _HistoriPageState extends State<HistoriPage> {
     }
 
     try {
-      final date = DateTime.parse(
-        tanggal,
-      ).toLocal();
+      final date = DateTime.parse(tanggal).toLocal();
 
-      return DateFormat(
-        "dd MMMM yyyy • HH:mm",
-        "id_ID",
-      ).format(date);
+      return DateFormat("dd MMMM yyyy • HH:mm", "id_ID").format(date);
     } catch (_) {
       return tanggal;
     }
@@ -252,19 +219,28 @@ class _HistoriPageState extends State<HistoriPage> {
   // FILTER CHIP
   // =========================================================
 
-  Widget _filterChip(
-    String value,
-    String label,
-  ) {
+  Widget _filterChip(String value, String label) {
+    final selected = selectedFilter == value;
     return ChoiceChip(
       label: Text(label),
-      selected: selectedFilter == value,
+      selected: selected,
+      showCheckmark: false,
+      side: BorderSide(
+        color: selected ? const Color(0xffbfdbfe) : const Color(0xffe5e7eb),
+      ),
+      backgroundColor: Colors.white,
+      selectedColor: const Color(0xffeff6ff),
+      labelStyle: TextStyle(
+        color: selected ? const Color(0xff2563eb) : const Color(0xff4b5563),
+        fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+        fontSize: 12,
+      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9)),
       onSelected: (_) {
         _ubahFilter(value);
       },
     );
   }
-
   // =========================================================
   // DETAIL ROW
   // =========================================================
@@ -277,27 +253,17 @@ class _HistoriPageState extends State<HistoriPage> {
     bool bold = false,
   }) {
     return Padding(
-      padding: const EdgeInsets.only(
-        bottom: 7,
-      ),
+      padding: const EdgeInsets.only(bottom: 7),
       child: Row(
-        crossAxisAlignment:
-            CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            icon,
-            size: 17,
-            color: Colors.blueGrey,
-          ),
+          Icon(icon, size: 17, color: Colors.blueGrey),
           const SizedBox(width: 8),
           SizedBox(
             width: 125,
             child: Text(
               title,
-              style: TextStyle(
-                fontSize: 13,
-                color: Colors.grey.shade700,
-              ),
+              style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
             ),
           ),
           Expanded(
@@ -306,10 +272,7 @@ class _HistoriPageState extends State<HistoriPage> {
               style: TextStyle(
                 fontSize: 13,
                 color: valueColor,
-                fontWeight:
-                    bold
-                        ? FontWeight.bold
-                        : FontWeight.w500,
+                fontWeight: bold ? FontWeight.bold : FontWeight.w500,
               ),
             ),
           ),
@@ -318,21 +281,12 @@ class _HistoriPageState extends State<HistoriPage> {
     );
   }
 
-  Widget _optionalRow(
-    IconData icon,
-    String title,
-    String? value,
-  ) {
-    if (value == null ||
-        value.trim().isEmpty) {
+  Widget _optionalRow(IconData icon, String title, String? value) {
+    if (value == null || value.trim().isEmpty) {
       return const SizedBox.shrink();
     }
 
-    return _detailRow(
-      icon,
-      title,
-      value,
-    );
+    return _detailRow(icon, title, value);
   }
 
   // =========================================================
@@ -342,261 +296,249 @@ class _HistoriPageState extends State<HistoriPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor:
-          const Color(0xfff7f8fc),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        title: const Text(
-          "Histori Stok",
-          style: TextStyle(
-            color: Colors.black87,
-          ),
-        ),
-        iconTheme: const IconThemeData(
-          color: Colors.black87,
-        ),
-      ),
-      body: Column(
-        children: [
-          // ===================================================
-          // SEARCH
-          // ===================================================
-
-          Padding(
-            padding:
-                const EdgeInsets.fromLTRB(
-              15,
-              15,
-              15,
-              10,
-            ),
-            child: TextField(
-              controller: searchController,
-              decoration:
-                  const InputDecoration(
-                hintText:
-                    "Cari histori barang...",
-                prefixIcon:
-                    Icon(Icons.search),
-                border:
-                    OutlineInputBorder(),
-              ),
-              onSubmitted: (value) {
-                loadHistori(
-                  search: value,
-                );
-              },
-              onChanged: (value) {
-                if (value.isEmpty) {
-                  loadHistori();
-                }
-              },
-            ),
-          ),
-
-          // ===================================================
-          // FILTER
-          // ===================================================
-
-          Padding(
-            padding:
-                const EdgeInsets.symmetric(
-              horizontal: 15,
-            ),
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
+      backgroundColor: const Color(0xfff6f7fb),
+      body: Padding(
+        padding: const EdgeInsets.all(28),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1100),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _filterChip(
-                  "semua",
-                  "Semua",
+                // HEADER
+                Row(
+                  children: [
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Histori Stok",
+                            style: TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xff111827),
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                          SizedBox(height: 5),
+                          Text(
+                            "Riwayat perubahan dan transaksi inventory.",
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Color(0xff6b7280),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xffe5e7eb)),
+                      ),
+                      child: IconButton(
+                        tooltip: "Refresh Histori",
+                        onPressed: () {
+                          loadHistori(search: searchController.text);
+                        },
+                        icon: const Icon(Icons.refresh_rounded, size: 20),
+                      ),
+                    ),
+                  ],
                 ),
-                _filterChip(
-                  "masuk",
-                  "Masuk",
+                const SizedBox(height: 24),
+                // SEARCH + FILTER
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xffe5e7eb)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      TextField(
+                        controller: searchController,
+                        decoration: InputDecoration(
+                          hintText: "Cari nama barang pada histori...",
+                          prefixIcon: const Icon(
+                            Icons.search_rounded,
+                            size: 20,
+                          ),
+                          suffixIcon: searchController.text.isEmpty
+                              ? null
+                              : IconButton(
+                                  tooltip: "Hapus pencarian",
+                                  onPressed: () {
+                                    searchController.clear();
+                                    setState(() {});
+                                    loadHistori();
+                                  },
+                                  icon: const Icon(
+                                    Icons.close_rounded,
+                                    size: 18,
+                                  ),
+                                ),
+                        ),
+                        onSubmitted: (value) {
+                          loadHistori(search: value);
+                        },
+                        onChanged: (value) {
+                          setState(() {});
+                          if (value.isEmpty) {
+                            loadHistori();
+                          }
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        "Filter Aktivitas",
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xff374151),
+                        ),
+                      ),
+                      const SizedBox(height: 9),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          _filterChip("semua", "Semua"),
+                          _filterChip("masuk", "Barang Masuk"),
+                          _filterChip("keluar", "Barang Keluar"),
+                          _filterChip("tambah", "Tambah"),
+                          _filterChip("edit", "Edit"),
+                          _filterChip("hapus", "Hapus"),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-                _filterChip(
-                  "keluar",
-                  "Keluar",
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Text(
+                      "${historiList.length} aktivitas",
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xff6b7280),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
                 ),
-                _filterChip(
-                  "tambah",
-                  "Tambah",
-                ),
-                _filterChip(
-                  "edit",
-                  "Edit",
-                ),
-                _filterChip(
-                  "hapus",
-                  "Hapus",
+                const SizedBox(height: 8),
+                // LIST
+                Expanded(
+                  child: isLoading
+                      ? const AppStateView.loading(
+                          title: "Memuat histori",
+                          message: "Sedang mengambil aktivitas inventory.",
+                        )
+                      : historiList.isEmpty
+                      ? AppStateView.empty(
+                          icon: Icons.history_rounded,
+                          title: "Histori tidak ditemukan",
+                          message: searchController.text.trim().isNotEmpty
+                              ? "Tidak ada aktivitas yang cocok dengan pencarian."
+                              : selectedFilter != "semua"
+                              ? "Tidak ada aktivitas pada filter yang dipilih."
+                              : "Aktivitas inventory akan muncul di sini.",
+                        )
+                      : RefreshIndicator(
+                          onRefresh: () =>
+                              loadHistori(search: searchController.text),
+                          child: ListView.builder(
+                            padding: const EdgeInsets.only(bottom: 24),
+                            itemCount: historiList.length,
+                            itemBuilder: (context, index) {
+                              return _buildHistoriCard(historiList[index]);
+                            },
+                          ),
+                        ),
                 ),
               ],
             ),
           ),
-
-          const SizedBox(height: 10),
-
-          // ===================================================
-          // LIST
-          // ===================================================
-
-          Expanded(
-            child: isLoading
-                ? const Center(
-                    child:
-                        CircularProgressIndicator(),
-                  )
-                : RefreshIndicator(
-                    onRefresh: () =>
-                        loadHistori(
-                      search:
-                          searchController
-                              .text,
-                    ),
-                    child:
-                        historiList.isEmpty
-                            ? ListView(
-                                children:
-                                    const [
-                                  SizedBox(
-                                    height:
-                                        180,
-                                  ),
-                                  Center(
-                                    child:
-                                        Text(
-                                      "Belum ada histori",
-                                    ),
-                                  ),
-                                ],
-                              )
-                            : ListView.builder(
-                                padding:
-                                    const EdgeInsets.only(
-                                  bottom: 20,
-                                ),
-                                itemCount:
-                                    historiList
-                                        .length,
-                                itemBuilder:
-                                    (
-                                  context,
-                                  index,
-                                ) {
-                                  final histori =
-                                      historiList[
-                                          index];
-
-                                  return _buildHistoriCard(
-                                    histori,
-                                  );
-                                },
-                              ),
-                  ),
-          ),
-        ],
+        ),
       ),
     );
   }
-
   // =========================================================
   // CARD HISTORI
   // =========================================================
 
-  Widget _buildHistoriCard(
-    HistoriStok histori,
-  ) {
+  Widget _buildHistoriCard(HistoriStok histori) {
     final color = getColor(histori);
 
-    final bool isMasuk =
-        histori.jenisTransaksi ==
-            "masuk";
+    final bool isMasuk = histori.jenisTransaksi == "masuk";
 
-    final bool isKeluar =
-        histori.jenisTransaksi ==
-            "keluar";
+    final bool isKeluar = histori.jenisTransaksi == "keluar";
 
-    final bool isTransaksi =
-        isMasuk || isKeluar;
+    final bool isTransaksi = isMasuk || isKeluar;
 
-    return Card(
-      margin: const EdgeInsets.symmetric(
-        horizontal: 15,
-        vertical: 8,
-      ),
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius:
-            BorderRadius.circular(14),
-        side: BorderSide(
-          color: Colors.grey.shade200,
-        ),
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 7),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xffe5e7eb)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x06000000),
+            blurRadius: 12,
+            offset: Offset(0, 3),
+          ),
+        ],
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // =================================================
             // HEADER
             // =================================================
-
             Row(
               children: [
                 Container(
                   width: 38,
                   height: 38,
                   decoration: BoxDecoration(
-                    color:
-                        color.withOpacity(
-                      0.12,
-                    ),
+                    color: color.withValues(alpha: 0.10),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(
-                    getIcon(histori),
-                    color: color,
-                    size: 20,
-                  ),
+                  child: Icon(getIcon(histori), color: color, size: 20),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     histori.namaBarang,
-                    style:
-                        const TextStyle(
-                      fontWeight:
-                          FontWeight.bold,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
                       fontSize: 17,
                     ),
                   ),
                 ),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(
+                  padding: const EdgeInsets.symmetric(
                     horizontal: 12,
                     vertical: 7,
                   ),
-                  decoration:
-                      BoxDecoration(
-                    color: color,
-                    borderRadius:
-                        BorderRadius.circular(
-                      8,
-                    ),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    getActionName(
-                      histori,
-                    ),
-                    style:
-                        const TextStyle(
-                      color: Colors.white,
-                      fontWeight:
-                          FontWeight.bold,
+                    getActionName(histori),
+                    style: TextStyle(
+                      color: color,
+                      fontWeight: FontWeight.bold,
                       fontSize: 11,
                     ),
                   ),
@@ -609,7 +551,6 @@ class _HistoriPageState extends State<HistoriPage> {
             // =================================================
             // STOK
             // =================================================
-
             _detailRow(
               Icons.inventory_2_outlined,
               "Stock",
@@ -619,57 +560,43 @@ class _HistoriPageState extends State<HistoriPage> {
 
             _detailRow(
               histori.selisih >= 0
-                  ? Icons
-                      .arrow_upward_rounded
-                  : Icons
-                      .arrow_downward_rounded,
+                  ? Icons.arrow_upward_rounded
+                  : Icons.arrow_downward_rounded,
               "Selisih",
-              formatSelisih(
-                histori.selisih,
-              ),
-              valueColor:
-                  histori.selisih >= 0
-                      ? Colors.green
-                      : Colors.red,
+              formatSelisih(histori.selisih),
+              valueColor: histori.selisih >= 0 ? Colors.green : Colors.red,
               bold: true,
             ),
 
             // =================================================
             // KHUSUS TRANSAKSI
             // =================================================
-
             if (isTransaksi) ...[
               const Divider(height: 24),
 
               _detailRow(
                 Icons.numbers_rounded,
                 "Jumlah",
-                histori.jumlah
-                    .toString(),
+                histori.jumlah.toString(),
                 bold: true,
               ),
 
               _detailRow(
-                Icons
-                    .payments_outlined,
+                Icons.payments_outlined,
                 "Harga Satuan",
-                formatRupiah(
-                  histori.hargaSatuan,
-                ),
+                formatRupiah(histori.hargaSatuan),
                 bold: true,
               ),
 
               if (isMasuk) ...[
                 _optionalRow(
-                  Icons
-                      .shopping_cart_outlined,
+                  Icons.shopping_cart_outlined,
                   "Order Oleh",
                   histori.orderOleh,
                 ),
 
                 _optionalRow(
-                  Icons
-                      .local_shipping_outlined,
+                  Icons.local_shipping_outlined,
                   "Dikirim Oleh",
                   histori.dikirimOleh,
                 ),
@@ -677,29 +604,25 @@ class _HistoriPageState extends State<HistoriPage> {
 
               if (isKeluar)
                 _optionalRow(
-                  Icons
-                      .person_outline,
+                  Icons.person_outline,
                   "Diambil Oleh",
                   histori.diambilOleh,
                 ),
 
               _optionalRow(
-                Icons
-                    .person_pin_outlined,
+                Icons.person_pin_outlined,
                 "Untuk",
                 histori.untukSiapa,
               ),
 
               _optionalRow(
-                Icons
-                    .verified_user_outlined,
+                Icons.verified_user_outlined,
                 "Diketahui Oleh",
                 histori.diketahuiOleh,
               ),
 
               _optionalRow(
-                Icons
-                    .location_on_outlined,
+                Icons.location_on_outlined,
                 "Lokasi",
                 histori.lokasi,
               ),
@@ -710,19 +633,11 @@ class _HistoriPageState extends State<HistoriPage> {
             // =================================================
             // USER & KETERANGAN
             // =================================================
+            _detailRow(Icons.person_outline, "User", histori.userName),
 
             _detailRow(
-              Icons.person_outline,
-              "User",
-              histori.userName,
-            ),
-
-            _detailRow(
-              Icons
-                  .description_outlined,
-              isTransaksi
-                  ? "Keterangan"
-                  : "Alasan",
+              Icons.description_outlined,
+              isTransaksi ? "Keterangan" : "Alasan",
               histori.keterangan ?? "-",
             ),
 
@@ -731,22 +646,14 @@ class _HistoriPageState extends State<HistoriPage> {
             Row(
               children: [
                 Icon(
-                  Icons
-                      .access_time_rounded,
+                  Icons.access_time_rounded,
                   size: 15,
-                  color:
-                      Colors.grey.shade500,
+                  color: Colors.grey.shade500,
                 ),
                 const SizedBox(width: 6),
                 Text(
-                  formatTanggal(
-                    histori.createdAt,
-                  ),
-                  style: TextStyle(
-                    color:
-                        Colors.grey.shade500,
-                    fontSize: 12,
-                  ),
+                  formatTanggal(histori.createdAt),
+                  style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
                 ),
               ],
             ),

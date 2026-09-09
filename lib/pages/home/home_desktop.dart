@@ -2,6 +2,7 @@
 
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_inventory/core/services/auth_service.dart';
 import 'package:flutter_inventory/core/services/dashboard_service.dart';
 import 'package:flutter_inventory/models/dashboard_model.dart';
 import 'package:flutter_inventory/pages/barang/inventory_desktop.dart';
@@ -21,6 +22,8 @@ class HomeDesktop extends StatefulWidget {
 
 class _HomeDesktopState extends State<HomeDesktop> {
   int selectedIndex = 0;
+  String? role;
+  String? name;
 
   final DashboardService dashboardService = DashboardService();
 
@@ -31,6 +34,21 @@ class _HomeDesktopState extends State<HomeDesktop> {
   void initState() {
     super.initState();
     _loadDashboard();
+    _loadRole();
+  }
+
+  Future<void> _loadRole() async {
+    final authService = AuthService();
+
+    final resultRole = await authService.getRole();
+    final resultName = await authService.getName();
+
+    if (!mounted) return;
+
+    setState(() {
+      role = resultRole;
+      name = resultName;
+    });
   }
 
   // =========================================================
@@ -69,7 +87,7 @@ class _HomeDesktopState extends State<HomeDesktop> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xfff7f8fc),
+      backgroundColor: const Color(0xfff6f7fb),
       body: Row(
         children: [
           _buildSidebar(),
@@ -85,25 +103,24 @@ class _HomeDesktopState extends State<HomeDesktop> {
 
   Widget _buildSidebar() {
     return Container(
-      width: 235,
+      width: 230,
       decoration: const BoxDecoration(
         color: Colors.white,
-        border: Border(right: BorderSide(color: Color(0xffeeeeee), width: 1)),
+        border: Border(right: BorderSide(color: Color(0xffe5e7eb))),
       ),
       child: Column(
         children: [
-          const SizedBox(height: 28),
-
+          const SizedBox(height: 24),
           // LOGO
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
+            padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Row(
               children: [
                 Container(
                   width: 42,
                   height: 42,
                   decoration: BoxDecoration(
-                    color: Colors.blue,
+                    color: const Color(0xff2563eb),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
@@ -113,70 +130,112 @@ class _HomeDesktopState extends State<HomeDesktop> {
                   ),
                 ),
                 const SizedBox(width: 12),
-                const Text(
-                  'MEDIFRA',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.5,
-                  ),
+                const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'MEDIFRA',
+                      style: TextStyle(
+                        fontSize: 19,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      'Inventory System',
+                      style: TextStyle(fontSize: 10, color: Colors.grey),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
-
-          const SizedBox(height: 40),
-
-          // MENU
+          const SizedBox(height: 35),
           _buildSectionTitle('MENU'),
-
           const SizedBox(height: 8),
-
           _buildMenuItem(
             index: 0,
-            icon: Icons.dashboard_rounded,
+            icon: Icons.grid_view_rounded,
             title: 'Dashboard',
           ),
-
           _buildMenuItem(
             index: 1,
-            icon: Icons.inventory_2_rounded,
+            icon: Icons.inventory_2_outlined,
             title: 'Inventory',
           ),
-
           _buildMenuItem(
             index: 2,
             icon: Icons.history_rounded,
             title: 'Histori Stok',
           ),
-
           _buildMenuItem(
             index: 3,
             icon: Icons.bar_chart_rounded,
             title: 'Report',
           ),
-
-          _buildMenuItem(
-            index: 4,
-            icon: Icons.people_alt_rounded,
-            title: 'User',
-          ),
-
+          if (role == 'admin')
+            _buildMenuItem(
+              index: 4,
+              icon: Icons.people_alt_outlined,
+              title: 'User',
+            ),
           const Spacer(),
-
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Divider(color: Colors.grey.shade200),
+          // USER LOGIN CARD
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 14),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xfff8fafc),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xffe5e7eb)),
+            ),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 18,
+                  backgroundColor: const Color(0xffdbeafe),
+                  child: Text(
+                    (name?.isNotEmpty == true ? name![0] : 'U').toUpperCase(),
+                    style: const TextStyle(
+                      color: Color(0xff2563eb),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        name ?? 'User',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      Text(
+                        (role ?? '-').toUpperCase(),
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
-
+          const SizedBox(height: 8),
           _buildMenuItem(
             index: -1,
             icon: Icons.logout_rounded,
             title: 'Logout',
             onTap: _logout,
           ),
-
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
         ],
       ),
     );
@@ -206,15 +265,14 @@ class _HomeDesktopState extends State<HomeDesktop> {
     required String title,
     VoidCallback? onTap,
   }) {
-    final bool selected = selectedIndex == index;
+    final selected = selectedIndex == index;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
       child: Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(12),
         child: InkWell(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(10),
           onTap:
               onTap ??
               () {
@@ -222,26 +280,31 @@ class _HomeDesktopState extends State<HomeDesktop> {
                   selectedIndex = index;
                 });
               },
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
             decoration: BoxDecoration(
-              color: selected ? const Color(0xffeaf3ff) : Colors.transparent,
-              borderRadius: BorderRadius.circular(12),
+              color: selected ? const Color(0xffeff6ff) : Colors.transparent,
+              borderRadius: BorderRadius.circular(10),
             ),
             child: Row(
               children: [
                 Icon(
                   icon,
-                  size: 21,
-                  color: selected ? Colors.blue : Colors.grey.shade600,
+                  size: 20,
+                  color: selected
+                      ? const Color(0xff2563eb)
+                      : const Color(0xff6b7280),
                 ),
-                const SizedBox(width: 13),
+                const SizedBox(width: 12),
                 Text(
                   title,
                   style: TextStyle(
-                    fontSize: 14,
-                    color: selected ? Colors.blue : Colors.grey.shade700,
+                    fontSize: 13,
                     fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                    color: selected
+                        ? const Color(0xff2563eb)
+                        : const Color(0xff4b5563),
                   ),
                 ),
               ],
@@ -251,7 +314,6 @@ class _HomeDesktopState extends State<HomeDesktop> {
       ),
     );
   }
-
   // =========================================================
   // CONTENT
   // =========================================================
@@ -332,17 +394,18 @@ class _HomeDesktopState extends State<HomeDesktop> {
                     const Text(
                       'Dashboard',
                       style: TextStyle(
-                        fontSize: 30,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: -0.5,
+                        fontSize: 28,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xff111827),
+                        letterSpacing: -0.6,
                       ),
                     ),
                     const SizedBox(height: 6),
                     Text(
                       'Pantau kondisi inventory dan aktivitas stok.',
-                      style: TextStyle(
-                        color: Colors.grey.shade600,
-                        fontSize: 14,
+                      style: const TextStyle(
+                        color: Color(0xff6b7280),
+                        fontSize: 13,
                       ),
                     ),
                   ],
@@ -353,13 +416,17 @@ class _HomeDesktopState extends State<HomeDesktop> {
               Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey.shade200),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: const Color(0xffe5e7eb)),
                 ),
                 child: IconButton(
                   tooltip: 'Refresh Dashboard',
                   onPressed: _loadDashboard,
-                  icon: const Icon(Icons.refresh_rounded, size: 21),
+                  icon: const Icon(
+                    Icons.refresh_rounded,
+                    size: 20,
+                    color: Color(0xff4b5563),
+                  ),
                 ),
               ),
             ],
@@ -456,7 +523,7 @@ class _HomeDesktopState extends State<HomeDesktop> {
           // CHART + ACTIVITY
           // ===================================================
           SizedBox(
-            height: 420,
+            height: 390,
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -577,12 +644,11 @@ class _HomeDesktopState extends State<HomeDesktop> {
     required Color color,
   }) {
     return Container(
-      height: 72,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: const Color(0xffe5e7eb)),
       ),
       child: Row(
         children: [
@@ -590,31 +656,39 @@ class _HomeDesktopState extends State<HomeDesktop> {
             width: 38,
             height: 38,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.10),
-              shape: BoxShape.circle,
+              color: color.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, color: color, size: 20),
+            child: Icon(icon, size: 19, color: color),
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: Text(
-              title,
-              style: TextStyle(
-                color: Colors.grey.shade600,
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: Color(0xff6b7280),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xff111827),
+                  ),
+                ),
+              ],
             ),
-          ),
-          Text(
-            value,
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
         ],
       ),
     );
   }
-
   // =========================================================
   // BAR CHART
   // =========================================================
@@ -624,13 +698,13 @@ class _HomeDesktopState extends State<HomeDesktop> {
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.grey.shade200),
-        boxShadow: [
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xffe5e7eb)),
+        boxShadow: const [
           BoxShadow(
-            color: Colors.black.withOpacity(0.025),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+            color: Color(0x08000000),
+            blurRadius: 14,
+            offset: Offset(0, 4),
           ),
         ],
       ),
@@ -855,13 +929,13 @@ class _HomeDesktopState extends State<HomeDesktop> {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.grey.shade200),
-        boxShadow: [
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xffe5e7eb)),
+        boxShadow: const [
           BoxShadow(
-            color: Colors.black.withOpacity(0.025),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+            color: Color(0x08000000),
+            blurRadius: 14,
+            offset: Offset(0, 4),
           ),
         ],
       ),
@@ -957,16 +1031,17 @@ class _HomeDesktopState extends State<HomeDesktop> {
                                     style: const TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w600,
+                                      color: Color(0xff111827),
                                     ),
                                   ),
                                   const SizedBox(height: 3),
                                   Text(
-                                    '${activity.namaUser ?? "System"} • ${activity.aksi}',
+                                    '${activity.namaUser ?? "System"} • ${activity.namaAksi}',
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      color: Colors.grey.shade500,
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: Color(0xff6b7280),
                                     ),
                                   ),
                                 ],
@@ -1180,6 +1255,8 @@ class _HomeDesktopState extends State<HomeDesktop> {
   // =========================================================
 
   Future<void> _logout() async {
+    await AuthService().logout();
+
     if (!mounted) return;
 
     Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);

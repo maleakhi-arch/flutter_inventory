@@ -240,6 +240,7 @@ class _BarangKeluarPageState extends State<BarangKeluarPage> {
     String? hint,
     TextInputType? keyboardType,
     int maxLines = 1,
+    IconData? icon,
   }) {
     return TextField(
       controller: controller,
@@ -248,14 +249,16 @@ class _BarangKeluarPageState extends State<BarangKeluarPage> {
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
-        border: const OutlineInputBorder(),
+        alignLabelWithHint: maxLines > 1,
+        prefixIcon: icon == null
+            ? null
+            : Padding(
+                padding: EdgeInsets.only(bottom: maxLines > 1 ? 52 : 0),
+                child: Icon(icon),
+              ),
       ),
     );
   }
-
-  // ============================================================
-  // BUILD
-  // ============================================================
 
   @override
   Widget build(BuildContext context) {
@@ -263,242 +266,322 @@ class _BarangKeluarPageState extends State<BarangKeluarPage> {
       appBar: AppBar(
         title: const Text(
           "Barang Keluar",
+          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18),
         ),
       ),
       body: isLoadingBarang
-          ? const Center(
-              child: CircularProgressIndicator(),
-            )
+          ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(28),
               child: Center(
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(
-                    maxWidth: 800,
-                  ),
-                  child: Column(
-                    crossAxisAlignment:
-                        CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        "Input Barang Keluar",
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
+                  constraints: const BoxConstraints(maxWidth: 900),
+                  child: Container(
+                    padding: const EdgeInsets.all(28),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: const Color(0xffe5e7eb)),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x08000000),
+                          blurRadius: 18,
+                          offset: Offset(0, 6),
                         ),
-                      ),
+                      ],
+                    ),
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final isWide = constraints.maxWidth >= 650;
+                        final fieldWidth = isWide
+                            ? (constraints.maxWidth - 16) / 2
+                            : constraints.maxWidth;
 
-                      const SizedBox(height: 8),
-
-                      const Text(
-                        "Catat barang yang keluar dari inventory.",
-                        style: TextStyle(
-                          color: Colors.grey,
-                        ),
-                      ),
-
-                      const SizedBox(height: 25),
-
-                      // ==================================================
-                      // BARANG
-                      // ==================================================
-
-                      DropdownButtonFormField<Barang>(
-                        initialValue: selectedBarang,
-                        isExpanded: true,
-                        decoration: const InputDecoration(
-                          labelText: "Barang",
-                          border: OutlineInputBorder(),
-                        ),
-                        items: barangList.map(
-                          (barang) {
-                            return DropdownMenuItem<Barang>(
-                              value: barang,
-                              child: Text(
-                                "${barang.namaBarang} "
-                                "(Stock: ${barang.stock})",
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            );
-                          },
-                        ).toList(),
-                        onChanged: isLoading
-                            ? null
-                            : (value) {
-                                setState(() {
-                                  selectedBarang = value;
-                                });
-                              },
-                      ),
-
-                      const SizedBox(height: 15),
-
-                      // ==================================================
-                      // INFO STOCK
-                      // ==================================================
-
-                      if (selectedBarang != null)
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: Colors.orange
-                                .withValues(
-                              alpha: 0.08,
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // HEADER
+                            Row(
+                              children: [
+                                Container(
+                                  width: 50,
+                                  height: 50,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xfffff1f2),
+                                    borderRadius: BorderRadius.circular(13),
+                                  ),
+                                  child: const Icon(
+                                    Icons.north_east_rounded,
+                                    color: Color(0xffdc2626),
+                                    size: 24,
+                                  ),
+                                ),
+                                const SizedBox(width: 14),
+                                const Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        "Input Barang Keluar",
+                                        style: TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.w700,
+                                          color: Color(0xff111827),
+                                        ),
+                                      ),
+                                      SizedBox(height: 4),
+                                      Text(
+                                        "Catat pengeluaran barang dan tujuan penggunaannya.",
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: Color(0xff6b7280),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
-                            borderRadius:
-                                BorderRadius.circular(8),
-                            border: Border.all(
-                              color: Colors.orange
-                                  .withValues(
-                                alpha: 0.3,
+                            const SizedBox(height: 28),
+                            const Text(
+                              "Informasi Barang",
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xff374151),
                               ),
                             ),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.inventory_2_outlined,
-                                color: Colors.orange,
+                            const SizedBox(height: 14),
+                            // DROPDOWN BARANG
+                            DropdownButtonFormField<Barang>(
+                              initialValue: selectedBarang,
+                              isExpanded: true,
+                              decoration: const InputDecoration(
+                                labelText: "Pilih Barang",
+                                prefixIcon: Icon(Icons.inventory_2_outlined),
                               ),
-                              const SizedBox(width: 10),
-                              Text(
-                                "Stock saat ini: "
-                                "${selectedBarang!.stock}",
-                                style: const TextStyle(
-                                  fontWeight:
-                                      FontWeight.w600,
+                              items: barangList.map((barang) {
+                                return DropdownMenuItem<Barang>(
+                                  value: barang,
+                                  child: Text(
+                                    "${barang.namaBarang} • Stock ${barang.stock}",
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                );
+                              }).toList(),
+                              onChanged: isLoading
+                                  ? null
+                                  : (value) {
+                                      setState(() {
+                                        selectedBarang = value;
+                                      });
+                                    },
+                            ),
+                            if (selectedBarang != null) ...[
+                              const SizedBox(height: 14),
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xfffff7ed),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: const Color(0xfffed7aa)),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 40,
+                                      height: 40,
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xffffedd5),
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: const Icon(
+                                        Icons.inventory_2_outlined,
+                                        color: Color(0xffea580c),
+                                        size: 20,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          const Text(
+                                            "Stock Tersedia",
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              color: Color(0xff9a3412),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 3),
+                                          Text(
+                                            "${selectedBarang!.stock} unit",
+                                            style: const TextStyle(
+                                              fontSize: 17,
+                                              fontWeight: FontWeight.w700,
+                                              color: Color(0xff7c2d12),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const Row(
+                                      children: [
+                                        Icon(
+                                          Icons.warning_amber_rounded,
+                                          size: 18,
+                                          color: Color(0xffea580c),
+                                        ),
+                                        SizedBox(width: 6),
+                                        Text(
+                                          "Jumlah keluar tidak boleh melebihi stok",
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            color: Color(0xff9a3412),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],
-                          ),
-                        ),
-
-                      const SizedBox(height: 20),
-
-                      // ==================================================
-                      // JUMLAH
-                      // ==================================================
-
-                      buildTextField(
-                        controller: jumlahController,
-                        label: "Jumlah",
-                        hint: "Contoh: 5",
-                        keyboardType:
-                            TextInputType.number,
-                      ),
-
-                      const SizedBox(height: 20),
-
-                      // ==================================================
-                      // HARGA SATUAN
-                      // ==================================================
-
-                      buildTextField(
-                        controller: hargaSatuanController,
-                        label: "Harga Satuan",
-                        hint: "Contoh: 15000",
-                        keyboardType:
-                            const TextInputType.numberWithOptions(
-                          decimal: true,
-                        ),
-                      ),
-
-                      const SizedBox(height: 20),
-
-                      // ==================================================
-                      // DIAMBIL OLEH
-                      // ==================================================
-
-                      buildTextField(
-                        controller: diambilOlehController,
-                        label: "Diambil Oleh",
-                        hint: "Nama pihak yang mengambil",
-                      ),
-
-                      const SizedBox(height: 20),
-
-                      // ==================================================
-                      // UNTUK SIAPA
-                      // ==================================================
-
-                      buildTextField(
-                        controller: untukSiapaController,
-                        label: "Untuk Siapa",
-                        hint: "Penerima / tujuan barang",
-                      ),
-
-                      const SizedBox(height: 20),
-
-                      // ==================================================
-                      // DIKETAHUI OLEH
-                      // ==================================================
-
-                      buildTextField(
-                        controller: diketahuiOlehController,
-                        label: "Diketahui Oleh",
-                      ),
-
-                      const SizedBox(height: 20),
-
-                      // ==================================================
-                      // LOKASI
-                      // ==================================================
-
-                      buildTextField(
-                        controller: lokasiController,
-                        label: "Lokasi",
-                        hint: "Contoh: Gudang A",
-                      ),
-
-                      const SizedBox(height: 20),
-
-                      // ==================================================
-                      // KETERANGAN
-                      // ==================================================
-
-                      buildTextField(
-                        controller: keteranganController,
-                        label: "Keterangan",
-                        hint: "Catatan tambahan",
-                        maxLines: 3,
-                      ),
-
-                      const SizedBox(height: 30),
-
-                      // ==================================================
-                      // BUTTON
-                      // ==================================================
-
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed:
-                              isLoading
-                                  ? null
-                                  : simpanBarangKeluar,
-                          style: ElevatedButton.styleFrom(
-                            padding:
-                                const EdgeInsets.symmetric(
-                              vertical: 16,
-                            ),
-                          ),
-                          child: isLoading
-                              ? const SizedBox(
-                                  height: 22,
-                                  width: 22,
-                                  child:
-                                      CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
+                            const SizedBox(height: 18),
+                            Wrap(
+                              spacing: 16,
+                              runSpacing: 18,
+                              children: [
+                                SizedBox(
+                                  width: fieldWidth,
+                                  child: buildTextField(
+                                    controller: jumlahController,
+                                    label: "Jumlah Keluar",
+                                    hint: "Contoh: 5",
+                                    keyboardType: TextInputType.number,
+                                    icon: Icons.remove_circle_outline,
                                   ),
-                                )
-                              : const Text(
-                                  "SIMPAN BARANG KELUAR",
                                 ),
-                        ),
-                      ),
-                    ],
+                                SizedBox(
+                                  width: fieldWidth,
+                                  child: buildTextField(
+                                    controller: hargaSatuanController,
+                                    label: "Harga Satuan",
+                                    hint: "Contoh: 15000",
+                                    keyboardType: const TextInputType.numberWithOptions(
+                                      decimal: true,
+                                    ),
+                                    icon: Icons.payments_outlined,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 28),
+                            const Divider(),
+                            const SizedBox(height: 22),
+                            const Text(
+                              "Informasi Transaksi",
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xff374151),
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+                            Wrap(
+                              spacing: 16,
+                              runSpacing: 18,
+                              children: [
+                                SizedBox(
+                                  width: fieldWidth,
+                                  child: buildTextField(
+                                    controller: diambilOlehController,
+                                    label: "Diambil Oleh",
+                                    hint: "Nama pihak yang mengambil",
+                                    icon: Icons.person_outline,
+                                  ),
+                                ),
+                                SizedBox(
+                                  width: fieldWidth,
+                                  child: buildTextField(
+                                    controller: untukSiapaController,
+                                    label: "Untuk Siapa",
+                                    hint: "Penerima / tujuan barang",
+                                    icon: Icons.person_pin_outlined,
+                                  ),
+                                ),
+                                SizedBox(
+                                  width: fieldWidth,
+                                  child: buildTextField(
+                                    controller: diketahuiOlehController,
+                                    label: "Diketahui Oleh",
+                                    hint: "Nama pihak yang mengetahui",
+                                    icon: Icons.verified_user_outlined,
+                                  ),
+                                ),
+                                SizedBox(
+                                  width: fieldWidth,
+                                  child: buildTextField(
+                                    controller: lokasiController,
+                                    label: "Lokasi",
+                                    hint: "Contoh: Gudang A",
+                                    icon: Icons.location_on_outlined,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 18),
+                            buildTextField(
+                              controller: keteranganController,
+                              label: "Keterangan",
+                              hint: "Catatan tambahan transaksi barang keluar",
+                              maxLines: 3,
+                              icon: Icons.notes_outlined,
+                            ),
+                            const SizedBox(height: 30),
+                            const Divider(),
+                            const SizedBox(height: 18),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                OutlinedButton.icon(
+                                  onPressed: isLoading
+                                      ? null
+                                      : () {
+                                          Navigator.pop(context);
+                                        },
+                                  icon: const Icon(Icons.close_rounded, size: 18),
+                                  label: const Text("Batal"),
+                                ),
+                                const SizedBox(width: 12),
+                                ElevatedButton.icon(
+                                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xffdc2626), foregroundColor: Colors.white),
+                                  onPressed: isLoading ? null : simpanBarangKeluar,
+                                  icon: isLoading
+                                      ? const SizedBox(
+                                          width: 18,
+                                          height: 18,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: Colors.white,
+                                          ),
+                                        )
+                                      : const Icon(
+                                          Icons.north_east_rounded,
+                                          size: 18,
+                                        ),
+                                  label: Text(
+                                    isLoading
+                                        ? "Menyimpan..."
+                                        : "Simpan Barang Keluar",
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        );
+                      },
+                    ),
                   ),
                 ),
               ),

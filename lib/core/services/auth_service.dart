@@ -1,5 +1,3 @@
-// ignore_for_file: avoid_print
-
 import 'dart:convert';
 
 import 'package:firebase_auth/firebase_auth.dart';
@@ -27,24 +25,12 @@ class AuthService {
       final idToken = await credential.user?.getIdToken();
 
       if (idToken == null) {
-        print("Gagal mengambil ID Token dari Firebase.");
         return false;
       }
-
-      print("=================================");
-      print("Firebase Login Berhasil");
-      print("User : ${credential.user?.email}");
-      print("ID TOKEN:");
-      print(idToken);
-      print("=================================");
 
       // ===========================
       // REQUEST KE LARAVEL
       // ===========================
-      print("URL:");
-      print(ApiEndpoints.firebaseLogin);
-
-      print("REQUEST AKAN DIKIRIM");
 
       final response = await http.post(
         Uri.parse(ApiEndpoints.firebaseLogin),
@@ -54,12 +40,6 @@ class AuthService {
         },
         body: jsonEncode({"idToken": idToken}),
       );
-
-      print("=================================");
-      print("STATUS : ${response.statusCode}");
-      print("BODY:");
-      print(response.body);
-      print("=================================");
 
       if (response.statusCode != 200) {
         return false;
@@ -74,21 +54,9 @@ class AuthService {
       await prefs.setString("name", data["name"]);
 
       return true;
-    } on FirebaseAuthException catch (e) {
-      print("=================================");
-      print("FIREBASE ERROR");
-      print(e.code);
-      print(e.message);
-      print("=================================");
-
+    } on FirebaseAuthException {
       return false;
-    } catch (e, s) {
-      print("=================================");
-      print("HTTP ERROR");
-      print(e);
-      print(s);
-      print("=================================");
-
+    } catch (_) {
       return false;
     }
   }
@@ -108,8 +76,8 @@ class AuthService {
             "Accept": "application/json",
           },
         );
-      } catch (e) {
-        print(e);
+      } catch (_) {
+        // Tetap bersihkan sesi lokal jika request logout gagal.
       }
     }
 

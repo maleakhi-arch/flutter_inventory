@@ -222,7 +222,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                 ),
                                 title: Text(item.namaBarang),
                                 subtitle: Text(
-                                  "${item.namaUser ?? '-'} • ${item.aksi}",
+                                  "${item.namaUser ?? '-'} • ${item.namaAksi}",
                                 ),
                                 trailing: Text(
                                   item.selisih >= 0
