@@ -272,12 +272,16 @@ class _BarangKeluarPageState extends State<BarangKeluarPage> {
       body: isLoadingBarang
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
-              padding: const EdgeInsets.all(28),
+              padding: EdgeInsets.all(
+                MediaQuery.of(context).size.width < 600 ? 16 : 28,
+              ),
               child: Center(
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 900),
                   child: Container(
-                    padding: const EdgeInsets.all(28),
+                    padding: EdgeInsets.all(
+                      MediaQuery.of(context).size.width < 600 ? 18 : 28,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(18),
@@ -387,58 +391,68 @@ class _BarangKeluarPageState extends State<BarangKeluarPage> {
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(color: const Color(0xfffed7aa)),
                                 ),
-                                child: Row(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Container(
-                                      width: 40,
-                                      height: 40,
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xffffedd5),
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      child: const Icon(
-                                        Icons.inventory_2_outlined,
-                                        color: Color(0xffea580c),
-                                        size: 20,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          const Text(
-                                            "Stock Tersedia",
-                                            style: TextStyle(
-                                              fontSize: 11,
-                                              color: Color(0xff9a3412),
-                                            ),
+                                    Row(
+                                      children: [
+                                        Container(
+                                          width: 40,
+                                          height: 40,
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xffffedd5),
+                                            borderRadius: BorderRadius.circular(10),
                                           ),
-                                          const SizedBox(height: 3),
-                                          Text(
-                                            "${selectedBarang!.stock} unit",
-                                            style: const TextStyle(
-                                              fontSize: 17,
-                                              fontWeight: FontWeight.w700,
-                                              color: Color(0xff7c2d12),
-                                            ),
+                                          child: const Icon(
+                                            Icons.inventory_2_outlined,
+                                            color: Color(0xffea580c),
+                                            size: 20,
                                           ),
-                                        ],
-                                      ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              const Text(
+                                                "Stock Tersedia",
+                                                style: TextStyle(
+                                                  fontSize: 11,
+                                                  color: Color(0xff9a3412),
+                                                ),
+                                              ),
+                                              const SizedBox(height: 3),
+                                              Text(
+                                                "${selectedBarang!.stock} unit",
+                                                style: const TextStyle(
+                                                  fontSize: 17,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: Color(0xff7c2d12),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
                                     ),
+                                    const SizedBox(height: 12),
                                     const Row(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         Icon(
                                           Icons.warning_amber_rounded,
                                           size: 18,
                                           color: Color(0xffea580c),
                                         ),
-                                        SizedBox(width: 6),
-                                        Text(
-                                          "Jumlah keluar tidak boleh melebihi stok",
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            color: Color(0xff9a3412),
+                                        SizedBox(width: 7),
+                                        Expanded(
+                                          child: Text(
+                                            "Jumlah keluar tidak boleh melebihi stok yang tersedia.",
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              height: 1.4,
+                                              color: Color(0xff9a3412),
+                                            ),
                                           ),
                                         ),
                                       ],
@@ -541,43 +555,78 @@ class _BarangKeluarPageState extends State<BarangKeluarPage> {
                             const SizedBox(height: 30),
                             const Divider(),
                             const SizedBox(height: 18),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: [
-                                OutlinedButton.icon(
-                                  onPressed: isLoading
-                                      ? null
-                                      : () {
-                                          Navigator.pop(context);
-                                        },
-                                  icon: const Icon(Icons.close_rounded, size: 18),
-                                  label: const Text("Batal"),
-                                ),
-                                const SizedBox(width: 12),
-                                ElevatedButton.icon(
-                                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xffdc2626), foregroundColor: Colors.white),
-                                  onPressed: isLoading ? null : simpanBarangKeluar,
-                                  icon: isLoading
-                                      ? const SizedBox(
-                                          width: 18,
-                                          height: 18,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                            color: Colors.white,
-                                          ),
-                                        )
-                                      : const Icon(
-                                          Icons.north_east_rounded,
-                                          size: 18,
-                                        ),
-                                  label: Text(
-                                    isLoading
-                                        ? "Menyimpan..."
-                                        : "Simpan Barang Keluar",
+                            if (isWide)
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  OutlinedButton.icon(
+                                    onPressed: isLoading
+                                        ? null
+                                        : () => Navigator.pop(context),
+                                    icon: const Icon(Icons.close_rounded, size: 18),
+                                    label: const Text("Batal"),
                                   ),
-                                ),
-                              ],
-                            ),
+                                  const SizedBox(width: 12),
+                                  ElevatedButton.icon(
+                                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xffdc2626), foregroundColor: Colors.white),
+                                    onPressed: isLoading ? null : simpanBarangKeluar,
+                                    icon: isLoading
+                                        ? const SizedBox(
+                                            width: 18,
+                                            height: 18,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: Colors.white,
+                                            ),
+                                          )
+                                        : const Icon(
+                                            Icons.north_east_rounded,
+                                            size: 18,
+                                          ),
+                                    label: Text(
+                                      isLoading
+                                          ? "Menyimpan..."
+                                          : "Simpan Barang Keluar",
+                                    ),
+                                  ),
+                                ],
+                              )
+                            else
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  ElevatedButton.icon(
+                                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xffdc2626), foregroundColor: Colors.white),
+                                    onPressed: isLoading ? null : simpanBarangKeluar,
+                                    icon: isLoading
+                                        ? const SizedBox(
+                                            width: 18,
+                                            height: 18,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: Colors.white,
+                                            ),
+                                          )
+                                        : const Icon(
+                                            Icons.north_east_rounded,
+                                            size: 18,
+                                          ),
+                                    label: Text(
+                                      isLoading
+                                          ? "Menyimpan..."
+                                          : "Simpan Barang Keluar",
+                                    ),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  OutlinedButton.icon(
+                                    onPressed: isLoading
+                                        ? null
+                                        : () => Navigator.pop(context),
+                                    icon: const Icon(Icons.close_rounded, size: 18),
+                                    label: const Text("Batal"),
+                                  ),
+                                ],
+                              ),
                           ],
                         );
                       },

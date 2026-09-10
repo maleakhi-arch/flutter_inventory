@@ -9,7 +9,10 @@ import 'package:flutter_inventory/models/barang.dart';
 
 import 'package:flutter_inventory/pages/barang/tambah_barang_page.dart';
 import 'package:flutter_inventory/pages/barang/edit_barang_page.dart';
+import 'package:flutter_inventory/pages/barang/barang_masuk_page.dart';
+import 'package:flutter_inventory/pages/barang/barang_keluar_page.dart';
 import 'package:flutter_inventory/pages/histori/histori_page.dart';
+import 'package:flutter_inventory/pages/repot/report_mobile.dart';
 import 'package:flutter_inventory/pages/user/user_page.dart';
 import 'package:flutter_inventory/pages/dashboard/dashboard_page.dart';
 
@@ -25,6 +28,7 @@ class _HomeMobileState extends State<HomeMobile> {
   final AuthService authService = AuthService();
 
   String? role;
+  String? name;
 
   List<Barang> barangList = [];
 
@@ -44,7 +48,7 @@ class _HomeMobileState extends State<HomeMobile> {
     super.initState();
 
     loadBarang();
-    loadRole();
+    loadUserAccess();
 
     scrollController.addListener(() {
       if (scrollController.position.pixels ==
@@ -84,7 +88,6 @@ class _HomeMobileState extends State<HomeMobile> {
         isLoading = false;
       });
     } catch (e) {
-
       if (!mounted) return;
 
       setState(() {
@@ -93,13 +96,15 @@ class _HomeMobileState extends State<HomeMobile> {
     }
   }
 
-  Future<void> loadRole() async {
-    final result = await authService.getRole();
+  Future<void> loadUserAccess() async {
+    final resultRole = await authService.getRole();
+    final resultName = await authService.getName();
 
     if (!mounted) return;
 
     setState(() {
-      role = result;
+      role = resultRole;
+      name = resultName;
     });
   }
 
@@ -125,7 +130,6 @@ class _HomeMobileState extends State<HomeMobile> {
         isLoadMore = false;
       });
     } catch (e) {
-
       if (!mounted) return;
 
       setState(() {
@@ -149,9 +153,52 @@ class _HomeMobileState extends State<HomeMobile> {
       setState(() {
         barangList = data;
       });
-    // ignore: empty_catches
-    } catch (e) {
-    }
+      // ignore: empty_catches
+    } catch (e) {}
+  }
+
+  void _openPage(Widget page) {
+    Navigator.pop(context);
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => page,
+      ),
+    );
+  }
+
+  Widget _drawerItem({
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+    Color? color,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 12,
+        vertical: 3,
+      ),
+      child: ListTile(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        leading: Icon(
+          icon,
+          size: 21,
+          color: color ?? const Color(0xff6b7280),
+        ),
+        title: Text(
+          title,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: Color(0xff374151),
+          ),
+        ),
+        onTap: onTap,
+      ),
+    );
   }
 
   @override
@@ -182,71 +229,281 @@ class _HomeMobileState extends State<HomeMobile> {
       ),
 
       drawer: Drawer(
-        child: Column(
-          children: [
-            UserAccountsDrawerHeader(
-              currentAccountPicture: const CircleAvatar(
-                backgroundColor: Colors.white,
+        backgroundColor: Colors.white,
+        child: SafeArea(
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  18,
+                  18,
+                  18,
+                  16,
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 46,
+                      height: 46,
+                      decoration: BoxDecoration(
+                        color: const Color(0xff2563eb),
+                        borderRadius: BorderRadius.circular(13),
+                      ),
+                      child: const Icon(
+                        Icons.inventory_2_rounded,
+                        color: Colors.white,
+                        size: 23,
+                      ),
+                    ),
 
-                child: Icon(Icons.inventory, size: 35, color: Colors.blue),
+                    const SizedBox(width: 12),
+
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "MEDIFRA",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xff111827),
+                            ),
+                          ),
+                          SizedBox(height: 2),
+                          Text(
+                            "Inventory System",
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Color(0xff9ca3af),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
 
-              accountName: const Text("Sistem Informasi Gudang"),
+              const Divider(height: 1),
 
-              accountEmail: Text(
-                "Hak Akses: ${(role ?? 'Memuat...').toUpperCase()}",
-              ),
-            ),
+              const SizedBox(height: 12),
 
-            ListTile(
-              leading: const Icon(Icons.dashboard, color: Colors.blue),
-
-              title: const Text("Dashboard Analitik"),
-
-              onTap: () {
-                Navigator.pop(context);
-
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const DashboardPage()),
-                );
-              },
-            ),
-
-            ListTile(
-              leading: const Icon(Icons.history, color: Colors.orange),
-
-              title: const Text("Histori Perubahan Stok"),
-
-              onTap: () {
-                Navigator.pop(context);
-
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const HistoriPage()),
-                );
-              },
-            ),
-
-            if (role == "admin") ...[
-              const Divider(),
-
-              ListTile(
-                leading: const Icon(Icons.people, color: Colors.teal),
-
-                title: const Text("Manajemen User"),
-
+              _drawerItem(
+                icon: Icons.dashboard_outlined,
+                title: "Dashboard",
                 onTap: () {
-                  Navigator.pop(context);
-
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const UserPage()),
+                  _openPage(
+                    const DashboardPage(),
                   );
                 },
               ),
+
+              _drawerItem(
+                icon: Icons.inventory_2_outlined,
+                title: "Inventory",
+                color: const Color(0xff2563eb),
+                onTap: () {
+                  Navigator.pop(context);
+                },
+              ),
+
+              if (role == "admin" || role == "user") ...[
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    20,
+                    16,
+                    20,
+                    6,
+                  ),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      "TRANSAKSI",
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1,
+                        color: Color(0xff9ca3af),
+                      ),
+                    ),
+                  ),
+                ),
+
+                _drawerItem(
+                  icon: Icons.south_west_rounded,
+                  title: "Barang Masuk",
+                  color: const Color(0xff16a34a),
+                  onTap: () {
+                    _openPage(
+                      const BarangMasukPage(),
+                    );
+                  },
+                ),
+
+                _drawerItem(
+                  icon: Icons.north_east_rounded,
+                  title: "Barang Keluar",
+                  color: const Color(0xffdc2626),
+                  onTap: () {
+                    _openPage(
+                      const BarangKeluarPage(),
+                    );
+                  },
+                ),
+              ],
+
+              const Padding(
+                padding: EdgeInsets.fromLTRB(
+                  20,
+                  16,
+                  20,
+                  6,
+                ),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    "AKTIVITAS",
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1,
+                      color: Color(0xff9ca3af),
+                    ),
+                  ),
+                ),
+              ),
+
+              _drawerItem(
+                icon: Icons.history_rounded,
+                title: "Histori Stok",
+                onTap: () {
+                  _openPage(
+                    const HistoriPage(),
+                  );
+                },
+              ),
+
+              _drawerItem(
+                icon: Icons.description_outlined,
+                title: "Report",
+                onTap: () {
+                  _openPage(
+                    const ReportMobile(),
+                  );
+                },
+              ),
+
+              if (role == "admin")
+                _drawerItem(
+                  icon: Icons.people_alt_outlined,
+                  title: "Management User",
+                  onTap: () {
+                    _openPage(
+                      const UserPage(),
+                    );
+                  },
+                ),
+
+              const Spacer(),
+
+              Padding(
+                padding: const EdgeInsets.all(14),
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xfff8fafc),
+                    borderRadius: BorderRadius.circular(13),
+                    border: Border.all(
+                      color: const Color(0xffe5e7eb),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 20,
+                        backgroundColor: const Color(0xffdbeafe),
+                        child: Text(
+                          (name?.isNotEmpty == true ? name![0] : "U")
+                              .toUpperCase(),
+                          style: const TextStyle(
+                            color: Color(0xff2563eb),
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(width: 10),
+
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              name ?? "User",
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+
+                            const SizedBox(height: 2),
+
+                            Text(
+                              (role ?? "-").toUpperCase(),
+                              style: const TextStyle(
+                                fontSize: 10,
+                                color: Color(0xff9ca3af),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  12,
+                  0,
+                  12,
+                  14,
+                ),
+                child: ListTile(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  leading: const Icon(
+                    Icons.logout_rounded,
+                    color: Color(0xffdc2626),
+                    size: 21,
+                  ),
+                  title: const Text(
+                    "Logout",
+                    style: TextStyle(
+                      color: Color(0xffdc2626),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  onTap: () async {
+                    await authService.logout();
+
+                    if (!mounted) return;
+
+                    Navigator.pushNamedAndRemoveUntil(
+                      context,
+                      "/login",
+                      (route) => false,
+                    );
+                  },
+                ),
+              ),
             ],
-          ],
+          ),
         ),
       ),
 
@@ -278,6 +535,7 @@ class _HomeMobileState extends State<HomeMobile> {
 
                     child: ListView.builder(
                       controller: scrollController,
+                      physics: const AlwaysScrollableScrollPhysics(),
 
                       itemCount: barangList.length + (isLoadMore ? 1 : 0),
 

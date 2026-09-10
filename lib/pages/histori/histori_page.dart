@@ -260,7 +260,7 @@ class _HistoriPageState extends State<HistoriPage> {
           Icon(icon, size: 17, color: Colors.blueGrey),
           const SizedBox(width: 8),
           SizedBox(
-            width: 125,
+            width: MediaQuery.sizeOf(context).width < 600 ? 92 : 125,
             child: Text(
               title,
               style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
@@ -295,10 +295,20 @@ class _HistoriPageState extends State<HistoriPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = MediaQuery.sizeOf(context).width < 600;
+
     return Scaffold(
+      appBar: isMobile
+          ? AppBar(
+              title: const Text(
+                "Histori Stok",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              ),
+            )
+          : null,
       backgroundColor: const Color(0xfff6f7fb),
       body: Padding(
-        padding: const EdgeInsets.all(28),
+        padding: EdgeInsets.all(isMobile ? 16 : 28),
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 1100),
@@ -308,21 +318,21 @@ class _HistoriPageState extends State<HistoriPage> {
                 // HEADER
                 Row(
                   children: [
-                    const Expanded(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             "Histori Stok",
                             style: TextStyle(
-                              fontSize: 28,
+                              fontSize: isMobile ? 23 : 28,
                               fontWeight: FontWeight.w700,
-                              color: Color(0xff111827),
+                              color: const Color(0xff111827),
                               letterSpacing: -0.5,
                             ),
                           ),
-                          SizedBox(height: 5),
-                          Text(
+                          const SizedBox(height: 5),
+                          const Text(
                             "Riwayat perubahan dan transaksi inventory.",
                             style: TextStyle(
                               fontSize: 13,

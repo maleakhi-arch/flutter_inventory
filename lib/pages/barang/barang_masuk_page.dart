@@ -264,12 +264,16 @@ class _BarangMasukPageState extends State<BarangMasukPage> {
       body: isLoadingBarang
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
-              padding: const EdgeInsets.all(28),
+              padding: EdgeInsets.all(
+                MediaQuery.of(context).size.width < 600 ? 16 : 28,
+              ),
               child: Center(
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 900),
                   child: Container(
-                    padding: const EdgeInsets.all(28),
+                    padding: EdgeInsets.all(
+                      MediaQuery.of(context).size.width < 600 ? 18 : 28,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(18),
@@ -506,42 +510,76 @@ class _BarangMasukPageState extends State<BarangMasukPage> {
                             const SizedBox(height: 30),
                             const Divider(),
                             const SizedBox(height: 18),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: [
-                                OutlinedButton.icon(
-                                  onPressed: isLoading
-                                      ? null
-                                      : () {
-                                          Navigator.pop(context);
-                                        },
-                                  icon: const Icon(Icons.close_rounded, size: 18),
-                                  label: const Text("Batal"),
-                                ),
-                                const SizedBox(width: 12),
-                                ElevatedButton.icon(
-                                  onPressed: isLoading ? null : simpanBarangMasuk,
-                                  icon: isLoading
-                                      ? const SizedBox(
-                                          width: 18,
-                                          height: 18,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                            color: Colors.white,
-                                          ),
-                                        )
-                                      : const Icon(
-                                          Icons.south_west_rounded,
-                                          size: 18,
-                                        ),
-                                  label: Text(
-                                    isLoading
-                                        ? "Menyimpan..."
-                                        : "Simpan Barang Masuk",
+                            if (isWide)
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  OutlinedButton.icon(
+                                    onPressed: isLoading
+                                        ? null
+                                        : () => Navigator.pop(context),
+                                    icon: const Icon(Icons.close_rounded, size: 18),
+                                    label: const Text("Batal"),
                                   ),
-                                ),
-                              ],
-                            ),
+                                  const SizedBox(width: 12),
+                                  ElevatedButton.icon(
+                                    onPressed: isLoading ? null : simpanBarangMasuk,
+                                    icon: isLoading
+                                        ? const SizedBox(
+                                            width: 18,
+                                            height: 18,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: Colors.white,
+                                            ),
+                                          )
+                                        : const Icon(
+                                            Icons.south_west_rounded,
+                                            size: 18,
+                                          ),
+                                    label: Text(
+                                      isLoading
+                                          ? "Menyimpan..."
+                                          : "Simpan Barang Masuk",
+                                    ),
+                                  ),
+                                ],
+                              )
+                            else
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  ElevatedButton.icon(
+                                    onPressed: isLoading ? null : simpanBarangMasuk,
+                                    icon: isLoading
+                                        ? const SizedBox(
+                                            width: 18,
+                                            height: 18,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: Colors.white,
+                                            ),
+                                          )
+                                        : const Icon(
+                                            Icons.south_west_rounded,
+                                            size: 18,
+                                          ),
+                                    label: Text(
+                                      isLoading
+                                          ? "Menyimpan..."
+                                          : "Simpan Barang Masuk",
+                                    ),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  OutlinedButton.icon(
+                                    onPressed: isLoading
+                                        ? null
+                                        : () => Navigator.pop(context),
+                                    icon: const Icon(Icons.close_rounded, size: 18),
+                                    label: const Text("Batal"),
+                                  ),
+                                ],
+                              ),
                           ],
                         );
                       },

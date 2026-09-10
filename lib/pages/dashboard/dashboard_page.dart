@@ -1,5 +1,6 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_inventory/core/ui/app_state_view.dart';
 import 'package:flutter_inventory/core/services/dashboard_service.dart';
 // Langkah 1 — Import Service Tambahan ✅
 import 'package:flutter_inventory/core/services/export_service.dart';
@@ -15,7 +16,7 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   final DashboardService service = DashboardService();
-  // Object exportService dihapus karena method bersifat static 
+  // Object exportService dihapus karena method bersifat static
   final AuthService authService = AuthService();
 
   DashboardModel? dashboard;
@@ -77,7 +78,10 @@ class _DashboardPageState extends State<DashboardPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = MediaQuery.sizeOf(context).width < 600;
+
     return Scaffold(
+      backgroundColor: const Color(0xfff6f7fb),
       appBar: AppBar(
         title: const Text("Dashboard"),
         centerTitle: true,
@@ -91,92 +95,84 @@ class _DashboardPageState extends State<DashboardPage> {
         ],
       ),
       body: isLoading
-          ? const Center(
-              child: CircularProgressIndicator(),
+          ? const AppStateView.loading(
+              title: "Memuat dashboard",
+              message: "Sedang mengambil data inventory.",
+            )
+          : dashboard == null
+          ? AppStateView.error(
+              title: "Dashboard gagal dimuat",
+              message: "Data dashboard tidak dapat diambil dari server.",
+              onAction: loadDashboard,
             )
           : RefreshIndicator(
               onRefresh: loadDashboard,
               child: ListView(
-                padding: const EdgeInsets.all(16),
+                padding: EdgeInsets.fromLTRB(
+                  isMobile ? 16 : 28,
+                  16,
+                  isMobile ? 16 : 28,
+                  32,
+                ),
                 children: [
-                  ElevatedButton.icon(
-                    onPressed: pilihTanggal,
-                    icon: const Icon(Icons.date_range),
-                    label: Text(startDate != null && endDate != null
-                        ? "${startDate!.day}/${startDate!.month} - ${endDate!.day}/${endDate!.month}"
-                        : "Pilih Periode"),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: pilihTanggal,
+                      icon: const Icon(Icons.calendar_month_outlined, size: 19),
+                      label: Text(
+                        startDate != null && endDate != null
+                            ? "${startDate!.day}/${startDate!.month}/${startDate!.year} - "
+                                  "${endDate!.day}/${endDate!.month}/${endDate!.year}"
+                            : "Pilih Periode",
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 15),
 
-                  // Row 1: Total Barang & Total Stok
-                  Row(
+                  GridView.count(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                    childAspectRatio: isMobile ? 1.22 : 1.55,
                     children: [
-                      Expanded(
-                        child: _summaryCard(
-                          "Total Barang",
-                          dashboard?.totalBarang.toString() ?? "0",
-                          Icons.inventory,
-                          Colors.blue,
-                        ),
+                      _summaryCard(
+                        "Total Barang",
+                        dashboard!.totalBarang.toString(),
+                        Icons.inventory_2_outlined,
+                        const Color(0xff2563eb),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _summaryCard(
-                          "Total Stok",
-                          dashboard?.totalStok.toString() ?? "0",
-                          Icons.warehouse,
-                          Colors.orange,
-                        ),
+                      _summaryCard(
+                        "Total Stok",
+                        dashboard!.totalStok.toString(),
+                        Icons.warehouse_outlined,
+                        const Color(0xfff59e0b),
                       ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 15),
-
-                  // Row 2: Barang Aman & Barang Sekarat (Kesehatan Stok)
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _summaryCard(
-                          "Barang Aman",
-                          dashboard?.barangAman.toString() ?? "0",
-                          Icons.check_circle,
-                          Colors.green,
-                        ),
+                      _summaryCard(
+                        "Barang Aman",
+                        dashboard!.barangAman.toString(),
+                        Icons.check_circle_outline_rounded,
+                        const Color(0xff16a34a),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _summaryCard(
-                          "Barang Sekarat",
-                          dashboard?.barangSekarat.toString() ?? "0",
-                          Icons.warning,
-                          Colors.red,
-                        ),
+                      _summaryCard(
+                        "Stok Rendah",
+                        dashboard!.barangSekarat.toString(),
+                        Icons.warning_amber_rounded,
+                        const Color(0xffdc2626),
                       ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 15),
-
-                  // Row 3: Ditambah Hari Ini & Dihapus Hari Ini (Aktivitas Hari Ini)
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _summaryCard(
-                          "Ditambah Hari Ini",
-                          dashboard?.barangMasukHariIni.toString() ?? "0",
-                          Icons.arrow_downward,
-                          Colors.green,
-                        ),
+                      _summaryCard(
+                        "Masuk Hari Ini",
+                        dashboard!.barangMasukHariIni.toString(),
+                        Icons.south_west_rounded,
+                        const Color(0xff16a34a),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _summaryCard(
-                          "Dihapus Hari Ini",
-                          dashboard?.barangKeluarHariIni.toString() ?? "0",
-                          Icons.arrow_upward,
-                          Colors.red,
-                        ),
+                      _summaryCard(
+                        "Keluar Hari Ini",
+                        dashboard!.barangKeluarHariIni.toString(),
+                        Icons.north_east_rounded,
+                        const Color(0xffdc2626),
                       ),
                     ],
                   ),
@@ -185,10 +181,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   const SizedBox(height: 25),
                   const Text(
                     "Aktivitas Terbaru",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 10),
 
@@ -216,8 +209,8 @@ class _DashboardPageState extends State<DashboardPage> {
                                     item.aksi == "tambah"
                                         ? Icons.add
                                         : item.aksi == "edit"
-                                            ? Icons.edit
-                                            : Icons.delete,
+                                        ? Icons.edit
+                                        : Icons.delete,
                                   ),
                                 ),
                                 title: Text(item.namaBarang),
@@ -244,10 +237,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   const SizedBox(height: 30),
                   const Text(
                     "Grafik Perubahan Stok",
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                   ),
                   const SizedBox(height: 15),
 
@@ -285,13 +275,16 @@ class _DashboardPageState extends State<DashboardPage> {
                                             return const SizedBox();
                                           }
                                           return Padding(
-                                            padding:
-                                                const EdgeInsets.only(top: 8),
+                                            padding: const EdgeInsets.only(
+                                              top: 8,
+                                            ),
                                             child: Text(
                                               dashboard!
-                                                  .grafik[value.toInt()].tanggal,
+                                                  .grafik[value.toInt()]
+                                                  .tanggal,
                                               style: const TextStyle(
-                                                  fontSize: 10),
+                                                fontSize: 10,
+                                              ),
                                             ),
                                           );
                                         },
@@ -333,10 +326,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   const SizedBox(height: 30),
                   const Text(
                     "Kondisi Persediaan",
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                   ),
                   const SizedBox(height: 15),
                   Card(
@@ -345,7 +335,8 @@ class _DashboardPageState extends State<DashboardPage> {
                       padding: const EdgeInsets.all(16),
                       child: SizedBox(
                         height: 240,
-                        child: dashboard == null ||
+                        child:
+                            dashboard == null ||
                                 (dashboard!.barangAman == 0 &&
                                     dashboard!.barangSekarat == 0)
                             ? const Center(
@@ -371,7 +362,8 @@ class _DashboardPageState extends State<DashboardPage> {
                                       ),
                                     ),
                                     PieChartSectionData(
-                                      value: dashboard!.barangSekarat.toDouble(),
+                                      value: dashboard!.barangSekarat
+                                          .toDouble(),
                                       title: "${dashboard!.barangSekarat}",
                                       color: Colors.red,
                                       radius: 70,
@@ -404,9 +396,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           const SizedBox(width: 6),
                           Text(
                             "Aman (${dashboard?.barangAman ?? 0})",
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w500,
-                            ),
+                            style: const TextStyle(fontWeight: FontWeight.w500),
                           ),
                         ],
                       ),
@@ -426,9 +416,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           const SizedBox(width: 6),
                           Text(
                             "Sekarat (${dashboard?.barangSekarat ?? 0})",
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w500,
-                            ),
+                            style: const TextStyle(fontWeight: FontWeight.w500),
                           ),
                         ],
                       ),
@@ -456,8 +444,10 @@ class _DashboardPageState extends State<DashboardPage> {
                                 const SizedBox(height: 15),
                                 ListTile(
                                   dense: true,
-                                  leading: const Icon(Icons.arrow_downward,
-                                      color: Colors.green),
+                                  leading: const Icon(
+                                    Icons.arrow_downward,
+                                    color: Colors.green,
+                                  ),
                                   title: Text(
                                     "Barang Masuk: ${dashboard!.summaryPeriode.barangMasuk}",
                                     style: const TextStyle(fontSize: 15),
@@ -465,8 +455,10 @@ class _DashboardPageState extends State<DashboardPage> {
                                 ),
                                 ListTile(
                                   dense: true,
-                                  leading: const Icon(Icons.arrow_upward,
-                                      color: Colors.red),
+                                  leading: const Icon(
+                                    Icons.arrow_upward,
+                                    color: Colors.red,
+                                  ),
                                   title: Text(
                                     "Barang Keluar: ${dashboard!.summaryPeriode.barangKeluar}",
                                     style: const TextStyle(fontSize: 15),
@@ -475,13 +467,16 @@ class _DashboardPageState extends State<DashboardPage> {
                                 const Divider(),
                                 ListTile(
                                   dense: true,
-                                  leading: const Icon(Icons.history,
-                                      color: Colors.grey),
+                                  leading: const Icon(
+                                    Icons.history,
+                                    color: Colors.grey,
+                                  ),
                                   title: Text(
                                     "Total Aktivitas: ${dashboard!.summaryPeriode.aktivitas}",
                                     style: const TextStyle(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.bold),
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                 ),
                               ],
@@ -494,38 +489,53 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _summaryCard(
-    String title,
-    String value,
-    IconData icon,
-    Color color,
-  ) {
-    return Card(
-      elevation: 3,
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          children: [
-            Icon(
-              icon,
-              color: color,
-              size: 35,
+  Widget _summaryCard(String title, String value, IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(15),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xffe5e7eb)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x06000000),
+            blurRadius: 12,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(10),
             ),
-            const SizedBox(height: 10),
-            Text(
-              value,
-              style: const TextStyle(
-                fontSize: 26,
-                fontWeight: FontWeight.bold,
-              ),
+            child: Icon(icon, color: color, size: 19),
+          ),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 23,
+              fontWeight: FontWeight.w700,
+              color: Color(0xff111827),
             ),
-            const SizedBox(height: 6),
-            Text(
-              title,
-              textAlign: TextAlign.center,
+          ),
+          Text(
+            title,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 11,
+              height: 1.3,
+              color: Color(0xff6b7280),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
